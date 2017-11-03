@@ -10,6 +10,7 @@ For other dependencies, refer to src/dependencies_install.sh
 #### To Run:
 Use the following script: src/tensorflow/CASL/_ctt.sh
 
-# Code maintained by https://github.com/shayegano and https://github.com/dkkim93
+#### Primary code maintainers:
+https://github.com/shayegano and https://github.com/dkkim93
 
 

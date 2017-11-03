@@ -1,6 +1,6 @@
-# Crossmodal Attentive Skill Learner (CASL)
+# CASL
 
-Hybrid CPU-GPU implementation based on https://github.com/NVlabs/GA3C/
+Hybrid CPU-GPU implementation of CASL based on https://github.com/NVlabs/GA3C/
 
 Codebase WIP and major updates tentative -- this message will disappear once all necessary files uploaded
 
@@ -12,6 +12,5 @@ For other dependencies, refer to src/dependencies_install.sh
 Use the following script: src/tensorflow/CASL/_ctt.sh
 
 #### Primary code maintainers:
-https://github.com/shayegano and https://github.com/dkkim93
-
-
+Shayegan Omidshafiei (https://github.com/shayegano)
+Dong-ki Kim (https://github.com/dkkim93)

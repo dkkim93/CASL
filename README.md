@@ -1,8 +1,10 @@
 # CASL
 
-Hybrid CPU-GPU implementation of CASL based on https://github.com/NVlabs/GA3C/
+Hybrid CPU-GPU implementation of CASL
 
 Codebase WIP and major updates tentative -- this message will disappear once all necessary files uploaded
+
+Codebase design based on https://github.com/NVlabs/GA3C/
 
 #### Dependencies:
 TensorFlow is required.

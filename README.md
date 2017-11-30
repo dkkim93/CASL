@@ -6,7 +6,7 @@ Codebase WIP and major updates tentative -- this message will disappear once all
 
 Codebase design based on https://github.com/NVlabs/GA3C/
 
-![CASL Amidar Gameplay](https://github.com/shayegano/CASL/misc/casl_amidar_gameplay.gif)
+![CASL Amidar Gameplay](https://github.com/shayegano/CASL/raw/master/misc/casl_amidar_gameplay.gif)
 
 
 #### Dependencies:

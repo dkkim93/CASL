@@ -20,8 +20,17 @@ For other dependencies, please refer to src/dependencies_install.sh.
 Three environments are supported:
 1. Sequential Door Puzzle
 2. 2D Minecraft-like
-3. Arcade-Learning-Environment-Audio
+3. Arcade Learning Environment-Audio (ALE-Audio)
+
+For ALE-Audio, please build the environment:
 ```
+cd src/environment/Arcade-Learning-Environment-Audio/
+mkdir build && cd build
+cmake -DUSE_SDL=ON -DUSE_RLGLUE=OFF -DBUILD_EXAMPLES=ON ..
+make -j4
+
+cd ..
+sudo pip install .
 
 ```
 

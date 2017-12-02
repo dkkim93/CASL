@@ -26,7 +26,6 @@
 
 # check python version; warn if not Python3
 import sys, warnings
-if sys.version_info < (3,0): warnings.warn("Optimized for Python3. Performance may suffer under Python2.", Warning)
 from Config import Config
 from Server import Server
 

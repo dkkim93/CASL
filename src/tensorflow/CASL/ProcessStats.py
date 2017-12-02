@@ -24,15 +24,14 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys, time, os, errno
-from shutil import copyfile, copy, copytree
+import sys, time, os, errno, threading, shutil
 import numpy as np
+from Config import Config
+from shutil import copyfile, copy, copytree
 if sys.version_info >= (3,0): from queue import Queue as queueQueue
 else: from Queue import Queue as queueQueue
 from datetime import datetime
 from multiprocessing import Process, Queue, Value
-import threading
-from Config import Config
 
 class ProcessStats(Process):
     def __init__(self):
@@ -50,8 +49,6 @@ class ProcessStats(Process):
         self._log_config_file()
 
     def copy_files_in_dir(self, src, dest):
-        import shutil
-
         try:
             shutil.copytree(src, dest)
         except OSError as e:
@@ -67,21 +64,18 @@ class ProcessStats(Process):
                 raise RuntimeError("[ ERROR ] Please set LOAD_CHECKPOINT to True")
 
             new_logdir = Config.LOGDIR + '_transfer' 
-#             if not os.path.exists(new_logdir):
-#                 os.makedirs(new_logdir)
-
             self.copy_files_in_dir(Config.LOGDIR, new_logdir)
             Config.LOGDIR = new_logdir
 
         else:
             if not os.path.exists(Config.LOGDIR):
                 os.makedirs(Config.LOGDIR)
+
             # Only backup the Config file if it does not exist (avoids cyclical updates of Config.py if loading checkpoints)
             if not os.path.isfile(os.path.join(Config.LOGDIR,'Config.py')):
                 copyfile('Config.py', os.path.join(Config.LOGDIR,'Config.py')) 
 
     def return_reward_log(self):
-        # Return reward and reward_log
         return self.reward_log.value, self.roll_reward_log.value
 
     def FPS(self):
@@ -97,10 +91,10 @@ class ProcessStats(Process):
         with open(os.path.join(Config.LOGDIR, Config.RESULTS_FILENAME), 'a') as results_logger:
             # Init parameters
             rolling_frame_count = 0
-            rolling_reward = 0
-            results_q = queueQueue(maxsize=Config.STAT_ROLLING_MEAN_WINDOW)
-            self.start_time = time.time()
-            first_time = datetime.now()
+            rolling_reward      = 0
+            results_q           = queueQueue(maxsize=Config.STAT_ROLLING_MEAN_WINDOW)
+            self.start_time     = time.time()
+            first_time          = datetime.now()
 
             while True:
                 episode_time, reward, length = self.episode_log_q.get()
@@ -140,7 +134,7 @@ class ProcessStats(Process):
                            self.predictor_count.value,
                            self.agent_count.value))
                     self.reward_log.value = reward
-                    self.roll_reward_log.value = rolling_reward / results_q.qsize()
+                    self.roll_reward_log.value = rolling_reward/results_q.qsize()
 
                     sys.stdout.flush()
 
@@ -148,5 +142,3 @@ class ProcessStats(Process):
                 # Log date, rolling reward, length
                 results_logger.write('%s, %10.4f, %d\n' % (episode_time.strftime("%Y-%m-%d %H:%M:%S"), rolling_reward / results_q.qsize(), length))
                 results_logger.flush()
-        #  except:
-            #  print 'Exception caught. Exiting ProcessStats.'

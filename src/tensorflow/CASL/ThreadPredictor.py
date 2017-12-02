@@ -24,10 +24,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import time
 import numpy as np
 from Config import Config
 from threading import Thread
-import time
 
 class ThreadPredictor(Thread):
     def __init__(self, server, id):
@@ -41,14 +41,14 @@ class ThreadPredictor(Thread):
         ids          = np.zeros(Config.PREDICTION_BATCH_SIZE, dtype=np.uint16)
         states_image = np.zeros((Config.PREDICTION_BATCH_SIZE, Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH, Config.STACKED_FRAMES), dtype=np.float32)
         states_audio = np.zeros((Config.PREDICTION_BATCH_SIZE, Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH, Config.STACKED_FRAMES), dtype=np.float32)
-        i_option    = [None] * Config.PREDICTION_BATCH_SIZE 
+        i_option     = [None] * Config.PREDICTION_BATCH_SIZE 
         rnn_state    = [None] * Config.PREDICTION_BATCH_SIZE 
 
         while not self.exit_flag:
             batch_size = 0
             q_empty = False # If prediction_q is empty, .get() will wait until prediction_q has at least one element
             while batch_size < Config.PREDICTION_BATCH_SIZE and not q_empty:
-                ids[batch_size], states_image[batch_size], states_audio[batch_size], rnn_state[batch_size], i_option[batch_size] = self.server.prediction_q.get() 
+                ids[batch_size], states_image[batch_size], states_audio[batch_size], rnn_state[batch_size], i_option[batch_size]=self.server.prediction_q.get() 
                 batch_size += 1
                 q_empty = self.server.prediction_q.empty()
 
@@ -67,7 +67,6 @@ class ThreadPredictor(Thread):
                 if Config.USE_RNN:
                     predict_dict_agt['rnn_state_out'] =  predict_dict_batched['rnn_state_out'][i_batch]
                     if Config.USE_ATTENTION and Config.ATTN_TYPE == Config.attn_multimodal:
-                        # TODO take care of temporal attention in 
                         predict_dict_agt['attn'] =  predict_dict_batched['attn'][i_batch]
 
                 self.server.agents[ids[i_batch]].wait_q.put(predict_dict_agt)

@@ -41,11 +41,11 @@ class ThreadTrainer(Thread):
     def _dynamic_pad(image_, audio_, r_, a_, o_):
         t = image_.shape[0]
         if t != Config.TIME_MAX:
-            imaget = np.zeros((Config.TIME_MAX, Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH, Config.STACKED_FRAMES),dtype=np.float32)
-            audiot = np.zeros((Config.TIME_MAX, Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH, Config.STACKED_FRAMES),dtype=np.float32)
-            rt = np.zeros((Config.TIME_MAX),dtype=np.float32)
-            at = np.zeros((Config.TIME_MAX, a_.shape[1]),dtype=np.float32)
-            ot = np.zeros((Config.TIME_MAX),dtype=np.float32)
+            imaget = np.zeros((Config.TIME_MAX, Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH, Config.STACKED_FRAMES), dtype=np.float32)
+            audiot = np.zeros((Config.TIME_MAX, Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH, Config.STACKED_FRAMES), dtype=np.float32)
+            rt = np.zeros((Config.TIME_MAX), dtype=np.float32)
+            at = np.zeros((Config.TIME_MAX, a_.shape[1]), dtype=np.float32)
+            ot = np.zeros((Config.TIME_MAX), dtype=np.float32)
 
             imaget[:t] = image_; audiot[:t] = audio_; rt[:t] = r_; at[:t] = a_; ot[:t] = o_# Fill from beginning to t with true image
             image_ = imaget; audio_ = audiot; r_ = rt; a_ = at; o_ = ot;# Zero pad the suffix

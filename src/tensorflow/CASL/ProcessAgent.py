@@ -26,14 +26,13 @@
 
 import time
 import numpy as np
-import matplotlib.pyplot as plt
+from Config import Config
 from datetime import datetime
 from multiprocessing import Process, Queue, Value
-from Config import Config
 from Environment import Environment
 from Experience import Experience
-from models import CustomLayers
 from OptionTracker import OptionTracker
+from models import CustomLayers
 
 class ProcessAgent(Process):
     def __init__(self, model, id, prediction_q, training_q, episode_log_q, num_actions, stats):
@@ -50,7 +49,7 @@ class ProcessAgent(Process):
         self.exit_flag              = Value('i', 0)
         self.stats                  = stats
         self.last_vis_episode_num   = 0
-        self.is_vis_training        = False
+        self.is_vis_training        = False # Initialize to False
 
         if Config.PLAY_MODE and Config.LOAD_CHECKPOINT and Config.USE_OPTIONS:
             self.is_option_tracker_on = True
@@ -119,12 +118,12 @@ class ProcessAgent(Process):
             if Config.PLAY_MODE:
                 return np.argmax(prediction_dict['cur_intra_option_probs'])
             else:
-                return np.random.choice(self.actions, p = prediction_dict['cur_intra_option_probs'])
+                return np.random.choice(self.actions, p=prediction_dict['cur_intra_option_probs'])
         else:
             if Config.PLAY_MODE:
                 return np.argmax(prediction_dict['p_actions'])
             else:
-                return np.random.choice(self.actions, p = prediction_dict['p_actions'])
+                return np.random.choice(self.actions, p=prediction_dict['p_actions'])
 
     def softmax(self,x):
         """Compute softmax values for each sets of scores in x."""
@@ -136,29 +135,27 @@ class ProcessAgent(Process):
             return np.random.choice(Config.NUM_OPTIONS, p=self.softmax(prediction_dict['option_q_model']))
         else:
             if np.random.rand() > self.model.option_epsilon:
-                #  return np.argmax(prediction_dict['option_q_model'])
                 return np.random.choice(Config.NUM_OPTIONS, p=self.softmax(prediction_dict['option_q_model']))
             else:
                 return np.random.randint(Config.NUM_OPTIONS)
 
     def run_episode(self):
-        # Initialize
         self.env.reset()
-        game_done              = False
-        experiences            = []
-        time_count             = 0
-        frame_count            = 0
-        reward_sum_logger      = 0.0
+        game_done         = False
+        experiences       = []
+        time_count        = 0
+        frame_count       = 0
+        reward_sum_logger = 0.0
 
         if Config.USE_OPTIONS:
             self.option_terminated = True
 
         if Config.USE_RNN:
             # input states for prediction
-            rnn_state = CustomLayers.RNNInputStateHandler.get_rnn_dict(init_with_zeros = True, 
-                                                                       n_lstm_layers_total = self.model.n_lstm_layers_total)
+            rnn_state = CustomLayers.RNNInputStateHandler.get_rnn_dict(init_with_zeros=True, 
+                                                                       n_lstm_layers_total=self.model.n_lstm_layers_total)
             # input states for training
-            init_rnn_state = CustomLayers.RNNInputStateHandler.get_rnn_dict(init_with_zeros = True, 
+            init_rnn_state = CustomLayers.RNNInputStateHandler.get_rnn_dict(init_with_zeros=True, 
                                                                             n_lstm_layers_total=self.model.n_lstm_layers_total)
         else:
             rnn_state      = None
@@ -176,13 +173,12 @@ class ProcessAgent(Process):
             # Option prediction
             if Config.USE_OPTIONS:
                 if self.option_terminated:
-                    i_option = 0 # Fake option input TODO eventually get rid of this double prediction
+                    i_option = 0 # NOTE Fake option input
                     prediction_dict = self.predict(self.env.current_state, rnn_state, i_option)
-                    i_option = self.select_option(prediction_dict)# Select option correctly in here
+                    i_option = self.select_option(prediction_dict)# NOTE Select option correctly in here
             else:
                 i_option = None
                  
-            # TODO two predictions in a row technically dont have the same outputs, due to BG training threads. 
             # Primitive action prediction (for option and non-option cases)
             prediction_dict = self.predict(self.env.current_state, rnn_state, i_option)
 
@@ -237,7 +233,7 @@ class ProcessAgent(Process):
 
                 if updated_leftover_exp is not None:
                     x_, audio_, r_, a_, o_ = self.convert_to_nparray(updated_leftover_exp) 
-                    yield x_, audio_, r_, a_, o_, init_rnn_state, reward_sum_logger # TODO minor figure out what to send back in terms of rnn_state. Technically should be rnn_state[-1].
+                    yield x_, audio_, r_, a_, o_, init_rnn_state, reward_sum_logger 
 
                 # Reset the tmax count
                 time_count = 0

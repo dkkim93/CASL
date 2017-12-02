@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time, models, importlib
+import numpy as np
 from multiprocessing import Queue
 from Config import Config
 from ProcessAgent import ProcessAgent
@@ -33,22 +34,19 @@ from ProcessTensorboard import ProcessTensorboard
 from NoThreadDynamicAdjustment import ThreadDynamicAdjustment
 from ThreadPredictor import ThreadPredictor
 from ThreadTrainer import ThreadTrainer
-import numpy as np
-
 
 class Server:
     def __init__(self):
-        self.stats              = ProcessStats()
-        self.tensorboard        = ProcessTensorboard()
-        self.training_q         = Queue(maxsize=Config.MAX_QUEUE_SIZE)
-        self.prediction_q       = Queue(maxsize=Config.MAX_QUEUE_SIZE)
-        # TODO clean logic later
+        self.stats        = ProcessStats()
+        self.tensorboard  = ProcessTensorboard()
+        self.training_q   = Queue(maxsize=Config.MAX_QUEUE_SIZE)
+        self.prediction_q = Queue(maxsize=Config.MAX_QUEUE_SIZE)
         if Config.GAME_CHOICE == Config.game_doorpuzzle:
             from Doorpuzzle import Actions
         elif Config.GAME_CHOICE == Config.game_minecraft:
             from Minecraft import Actions
         gridworld_actions = Actions()
-        self.num_actions = gridworld_actions.num_actions
+        self.num_actions  = gridworld_actions.num_actions
 
         self.model = self.make_model()
         if Config.LOAD_CHECKPOINT: 
@@ -62,7 +60,7 @@ class Server:
         self.dynamic_adjustment = ThreadDynamicAdjustment(self)# NOTE Server is passed in here.
 
     def make_model(self):
-        net_model = getattr(importlib.import_module('models.'+Config.NET_ARCH),Config.NET_ARCH)
+        net_model = getattr(importlib.import_module('models.' + Config.NET_ARCH), Config.NET_ARCH)
         return net_model(Config.DEVICE, self.num_actions) 
 
     def add_trainer(self):
@@ -96,7 +94,6 @@ class Server:
         self.agents.pop()
 
     def train_model(self, x_, audio_, r_, a_, o_, rnn_state_, seq_lengths_):
-        # [ INFO ] x_.shape: (45, 84, 84, 4) <--> (batch_size, row, col, channel)
         self.model.train(x_, audio_, r_, a_, o_, rnn_state_, seq_lengths_)
         self.training_step += 1
         self.frame_counter += np.shape(x_)[0]
@@ -123,14 +120,13 @@ class Server:
                 trainer.enabled = False
 
         # Algorithm parameters
-        learning_rate_multiplier = (Config.LEARNING_RATE_END - Config.LEARNING_RATE_START) / Config.ANNEALING_EPISODE_COUNT
-        beta_multiplier = (Config.BETA_END - Config.BETA_START) / Config.ANNEALING_EPISODE_COUNT
+        learning_rate_multiplier = (Config.LEARNING_RATE_END - Config.LEARNING_RATE_START)/Config.ANNEALING_EPISODE_COUNT
+        beta_multiplier = (Config.BETA_END - Config.BETA_START)/Config.ANNEALING_EPISODE_COUNT
         if Config.USE_OPTIONS:
-            option_epsilon_multiplier = (Config.OPTION_EPSILON_END- Config.OPTION_EPSILON_START) / Config.ANNEALING_EPISODE_COUNT
-            option_cost_delib_multiplier = (Config.COST_DELIB_END- Config.COST_DELIB_START) / Config.ANNEALING_EPISODE_COUNT
+            option_epsilon_multiplier = (Config.OPTION_EPSILON_END- Config.OPTION_EPSILON_START)/Config.ANNEALING_EPISODE_COUNT
+            option_cost_delib_multiplier = (Config.COST_DELIB_END- Config.COST_DELIB_START)/Config.ANNEALING_EPISODE_COUNT
 
         while self.stats.episode_count.value < Config.EPISODES:
-            #  try:
             # Linearly anneals the learning rate up to Config.ANNEALING_EPISODE_COUNT, after which it maintains at Config.LEARNING_RATE_END
             step = min(self.stats.episode_count.value, Config.ANNEALING_EPISODE_COUNT - 1)
             self.model.learning_rate = Config.LEARNING_RATE_START + learning_rate_multiplier * step
@@ -143,8 +139,6 @@ class Server:
             if Config.SAVE_MODELS and self.stats.should_save_model.value > 0:
                 self.save_model()
                 self.stats.should_save_model.value = 0
-            #  except: # TODO should be excewpt KeyboardInterrupt or sigterm
-                #  print 'KeyboardInterrupt. Exiting.'
 
         # Terminate all with exit_flag == True
         self.dynamic_adjustment.exit_flag = True

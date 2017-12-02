@@ -26,7 +26,7 @@ For ALE-Audio, please build the environment:
 ```
 cd src/environment/Arcade-Learning-Environment-Audio/
 mkdir build && cd build
-cmake -DUSE_SDL=ON -DUSE_RLGLUE=OFF -DBUILD_EXAMPLES=ON ..
+cmake -DUSE_SDL=ON -DUSE_RLGLUE=OFF -DBUILD_EXAMPLES=OFF ..
 make -j4
 
 cd ..

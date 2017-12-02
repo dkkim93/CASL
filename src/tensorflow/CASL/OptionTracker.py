@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 from Config import Config
 
 class OptionTracker():
+    """
+        Class used for visualizing options
+        Useful for analyzing learned options
+    """
     def __init__(self):
         self.img_traj_tracker        = np.zeros((Config.ENV_COL, Config.ENV_ROW, Config.NUM_OPTIONS))
         self.img_option_term_tracker = np.zeros((Config.ENV_COL, Config.ENV_ROW, Config.NUM_OPTIONS))

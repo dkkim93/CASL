@@ -23,7 +23,7 @@ class Doorpuzzle():
         self.cell_px_size    = Config.PIXEL_SIZE
         self.img_width       = Config.IMAGE_WIDTH
         self.img_height      = Config.IMAGE_HEIGHT
-        self.simple_render   = Config.SIMPLE_RENDER
+        self.simple_render   = Config.SIMPLE_RENDER # True: gridworld-like vis, False: vis with characters, items, etc
         self.hard_mode       = Config.HARD_MODE
         self.actions         = Actions()
         self.count_iter      = 0
@@ -38,13 +38,7 @@ class Doorpuzzle():
         if Config.USE_AUDIO:
             self._init_mfcc()
 
-        self.reset(reset_time = True)
-
-    def dist_manhat(self, loc_a, loc_b):
-        return abs(loc_a[0] - loc_b[0]) + abs(loc_a[1] - loc_b[1])
-
-    def dist_euclid(self, loc_a, loc_b):
-       return np.linalg.norm(loc_a - loc_b) 
+        self.reset(reset_time=True)
 
     #########################################################################
     # ENV-RELATED
@@ -71,24 +65,24 @@ class Doorpuzzle():
     
     def _init_agent_targets_key_loc(self):
         # Agent location
-        self.agent_loc = np.array([0, 0], dtype = np.uint16)
+        self.agent_loc = np.array([0, 0], dtype=np.uint16)
 
         # Target location
-        self.target1_loc = np.array([0, self.env_col - 1], dtype = np.uint16)
-        self.target2_loc = np.array([self.env_row - 1, 0], dtype = np.uint16)
+        self.target1_loc = np.array([0, self.env_col - 1], dtype=np.uint16)
+        self.target2_loc = np.array([self.env_row - 1, 0], dtype=np.uint16)
 
         # Key loc
         if self.hard_mode:
-            row = np.random.randint(low = 0, high = self.env_row)
-            col = np.random.randint(low = 0, high = self.env_col)
+            row = np.random.randint(low=0, high=self.env_row)
+            col = np.random.randint(low=0, high=self.env_col)
             while self._check_overlap(row, col):
-                row = np.random.randint(low = 0, high = self.env_row)
-                col = np.random.randint(low = 0, high = self.env_col)
-            self.key_loc = np.array([row, col], dtype = np.uint16)
+                row = np.random.randint(low=0, high=self.env_row)
+                col = np.random.randint(low=0, high=self.env_col)
+            self.key_loc = np.array([row, col], dtype=np.uint16)
         else:
             center_row = int(np.floor(self.env_row / 2.))
             center_col = int(np.floor(self.env_col / 2.))
-            self.key_loc = np.array([center_row, center_col], dtype = np.uint16)
+            self.key_loc = np.array([center_row, center_col], dtype=np.uint16)
 
     def _init_obstacle_matrix(self):
         self.obstacle_matrix = np.zeros((self.env_row, self.env_col))
@@ -98,7 +92,7 @@ class Doorpuzzle():
 
     #########################################################################
     # RL-RELATED
-    def reset(self, reset_time = True):
+    def reset(self, reset_time=True):
         if reset_time:
             self.count_iter = 0
         self._init_key_types()
@@ -108,14 +102,14 @@ class Doorpuzzle():
         return self._get_obs()
 
     def reset_to_stage2(self):
-        self.has_key    = True
+        self.has_key = True
 
-    def _get_obs(self, show_gt = False, return_agt_loc = False):
+    def _get_obs(self, show_gt = False, return_agt_loc=False):
         if Config.USE_AUDIO:
-            image, audio = self._get_image_and_audio(show_gt = show_gt)
+            image, audio = self._get_image_and_audio(show_gt=show_gt)
             next_observation = [image, audio]
         else:
-            next_observation = self._preprocess_img(show_gt = show_gt)
+            next_observation = self._preprocess_img(show_gt=show_gt)
 
         if return_agt_loc:
             if Config.USE_AUDIO:
@@ -126,8 +120,8 @@ class Doorpuzzle():
 
         return next_observation
 
-    def _get_image_and_audio(self, show_gt = False):
-        image = self._preprocess_img(show_gt = show_gt)
+    def _get_image_and_audio(self, show_gt=False):
+        image = self._preprocess_img(show_gt=show_gt)
 
         if self.has_key == True:
             audio = self.mfcc_no_listen
@@ -177,28 +171,24 @@ class Doorpuzzle():
 
             if self._is_obstacle_free(new_loc, self.agent_loc[1]):
                 self.agent_loc = np.array([new_loc, self.agent_loc[1]])
-    
         elif hasattr(self.actions,'DOWN') and action == self.actions.DOWN:
             new_loc = self.agent_loc[0] + 1
-            if new_loc >= self.env_row : new_loc = self.env_row-1 # Out of Boundary
+            if new_loc >= self.env_row : new_loc = self.env_row - 1 # Out of Boundary
 
             if self._is_obstacle_free(new_loc, self.agent_loc[1]):
                 self.agent_loc = np.array([new_loc, self.agent_loc[1]])
-    
         elif hasattr(self.actions,'RIGHT') and action == self.actions.RIGHT:
             new_loc = self.agent_loc[1] + 1
-            if new_loc >= self.env_col : new_loc = self.env_col-1 # Out of Boundary
+            if new_loc >= self.env_col : new_loc = self.env_col - 1 # Out of Boundary
 
             if self._is_obstacle_free(self.agent_loc[0], new_loc):
                 self.agent_loc = np.array([self.agent_loc[0], new_loc])
-    
         elif hasattr(self.actions,'LEFT') and action == self.actions.LEFT:
             new_loc = self.agent_loc[1] - 1
             if new_loc < 0: new_loc = 0 # Out of Boundary
 
             if self._is_obstacle_free(self.agent_loc[0], new_loc):
                 self.agent_loc = np.array([self.agent_loc[0], new_loc])
-    
         else:
             raise ValueError("[ ERROR ] Wrong action!")
 
@@ -241,15 +231,15 @@ class Doorpuzzle():
         is_maxiter_reached = self.count_iter >= (self.max_iter + self.stacked_frames -1)
         if is_maxiter_reached:
             game_over = True
-            self.reset(reset_time = True)
+            self.reset(reset_time=True)
 
         if np.array_equal(self.agent_loc, self.target1_loc):
             game_over = True
-            self.reset(reset_time = True)
+            self.reset(reset_time=True)
 
         if np.array_equal(self.agent_loc, self.target2_loc):
             game_over = True
-            self.reset(reset_time = True)
+            self.reset(reset_time=True)
 
         return next_observation, reward, game_over
 
@@ -264,13 +254,12 @@ class Doorpuzzle():
         (samplerate, audio) = wav.read(filename)
         return self._wav_to_mfcc(samplerate, audio)
     
-    # TODO move this to a utils dir so all code can use the same one
     def _wav_to_mfcc(self, samplerate, wav):
         mfcc_data = mfcc(signal=wav, samplerate=samplerate)
         mfcc_data = np.swapaxes(mfcc_data, 0 ,1) # To make time axis to be in x-axis 
         mfcc_data = imresize(mfcc_data, (Config.IMAGE_WIDTH, Config.IMAGE_HEIGHT), interp='cubic') 
     
-        # TODO I think even this should be normalized more carefully (i.e., with an absolute system rather than relative)
+        # Apply normalization of data
         min_data = np.min(mfcc_data.flatten())
         max_data = np.max(mfcc_data.flatten())
         mfcc_data = 1.*(mfcc_data -min_data)/(max_data-min_data)
@@ -365,7 +354,7 @@ class Doorpuzzle():
             else:
                 return self.img_background
 
-    def _preprocess_img(self, show_gt = False):
+    def _preprocess_img(self, show_gt=False):
         img = self._render_grid(show_gt = show_gt)
         if show_gt: return img
 
@@ -396,3 +385,11 @@ class Doorpuzzle():
                 gridworld_render[row_from:row_to, col_from:col_to, :] = self._render_cell(row, col, show_gt)
 
         return gridworld_render
+
+    #########################################################################
+    # MISC
+    def dist_manhat(self, loc_a, loc_b):
+        return abs(loc_a[0] - loc_b[0]) + abs(loc_a[1] - loc_b[1])
+
+    def dist_euclid(self, loc_a, loc_b):
+       return np.linalg.norm(loc_a - loc_b) 

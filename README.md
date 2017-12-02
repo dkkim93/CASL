@@ -31,11 +31,10 @@ make -j4
 
 cd ..
 sudo pip install .
-
 ```
 
 #### To Run:
-Use the following script: src/tensorflow/CASL/_ctt.sh
+Please run the following script: src/tensorflow/CASL/_ctt.sh
 
 #### Primary code maintainers:
 Shayegan Omidshafiei (https://github.com/shayegano)

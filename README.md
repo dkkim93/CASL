@@ -1,10 +1,7 @@
 # CASL
 
-Hybrid CPU-GPU implementation of Crossmodal Attentive Skill Learner (CASL)
-
-Codebase WIP and major updates tentative -- this message will disappear once all necessary files uploaded  
-
-Please note that codebase design is based on [GA3C](https://github.com/NVlabs/GA3C/).
+Hybrid CPU-GPU implementation of Crossmodal Attentive Skill Learner (CASL)  
+Codebase design is based on [GA3C](https://github.com/NVlabs/GA3C/).
 
 ![CASL Amidar Gameplay](https://github.com/shayegano/CASL/raw/master/misc/casl_amidar_gameplay.gif)
 

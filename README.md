@@ -15,6 +15,12 @@ Link: https://arxiv.org/abs/1711.10314
 [TensorFlow](https://www.tensorflow.org/) is required (tested with version 1.4.0).  
 For other dependencies, please refer to src/dependencies_install.sh.  
 
+#### Frameworks:
+
+Two frameworks are supported:
+1. Option-based crossmodal attention learning (**master branch**)
+2. Action-based crossmodal attention learning (**CASL-action branch**)
+
 #### Environments:
 
 Three environments are supported:

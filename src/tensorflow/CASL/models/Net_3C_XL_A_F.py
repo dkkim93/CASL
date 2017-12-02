@@ -18,7 +18,6 @@ class Net_3C_XL_A_F(NetworkVPCore):
         self._create_graph_inputs()
 
         # -------- Put custom architecture here --------
-
         # Video CNN
         fc1_i = CustomLayers.multilayer_cnn(
                 input         = self.x,
@@ -35,11 +34,11 @@ class Net_3C_XL_A_F(NetworkVPCore):
 
         # Video LSTM
         rnn_out_i, self.n_lstm_layers_total, self.hmm = CustomLayers.multilayer_lstm(input = fc1_i, 
-                                                                            n_lstm_layers_total = self.n_lstm_layers_total,
-                                                                            global_rnn_state_in = self.rnn_state_in, 
-                                                                            global_rnn_state_out = self.rnn_state_out, 
-                                                                            base_name = 'i_', 
-                                                                            seq_lengths = self.seq_lengths)
+                                                                                     n_lstm_layers_total=self.n_lstm_layers_total,
+                                                                                     global_rnn_state_in=self.rnn_state_in, 
+                                                                                     global_rnn_state_out=self.rnn_state_out, 
+                                                                                     base_name='i_', 
+                                                                                     seq_lengths=self.seq_lengths)
 
         # Audio CNN
         if Config.USE_AUDIO:
@@ -58,20 +57,20 @@ class Net_3C_XL_A_F(NetworkVPCore):
 
             # Audio LSTM
             rnn_out_a, self.n_lstm_layers_total, _ = CustomLayers.multilayer_lstm(input = fc1_a, 
-                                                                               n_lstm_layers_total = self.n_lstm_layers_total,
-                                                                               global_rnn_state_in = self.rnn_state_in, 
-                                                                               global_rnn_state_out = self.rnn_state_out, 
-                                                                               base_name = 'a_', 
-                                                                               seq_lengths = self.seq_lengths)
+                                                                                  n_lstm_layers_total=self.n_lstm_layers_total,
+                                                                                  global_rnn_state_in=self.rnn_state_in, 
+                                                                                  global_rnn_state_out=self.rnn_state_out, 
+                                                                                  base_name='a_', 
+                                                                                  seq_lengths=self.seq_lengths)
 
         # Attention
         if Config.USE_ATTENTION:
             fc_dim = 256
-            fused_layer, self.softmax_attention = CustomLayers.multimodal_attention_layer(input_i = rnn_out_i, attention_feat_i = rnn_out_i, 
-                                                                                          input_a = rnn_out_a, attention_feat_a = rnn_out_a,
-                                                                                          fc_dim = fc_dim, 
-                                                                                          fusion_mode = CustomLayers.FUSION_SUM)
-            self.layer_tracker.append(tf.layers.dense(inputs=fused_layer, units=fc_dim, use_bias = True, activation=tf.nn.relu, name='fc2'))
+            fused_layer, self.softmax_attention = CustomLayers.multimodal_attention_layer(input_i=rnn_out_i, attention_feat_i=rnn_out_i, 
+                                                                                          input_a=rnn_out_a, attention_feat_a=rnn_out_a,
+                                                                                          fc_dim=fc_dim, 
+                                                                                          fusion_mode=CustomLayers.FUSION_SUM)
+            self.layer_tracker.append(tf.layers.dense(inputs=fused_layer, units=fc_dim, use_bias=True, activation=tf.nn.relu, name='fc2'))
         else:
             self.layer_tracker.append(tf.concat([rnn_out_i, rnn_out_a], axis=1)) # axis = 0 would concat batches instead 
 

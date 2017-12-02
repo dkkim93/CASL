@@ -19,7 +19,6 @@ class Net_3C_F(NetworkVPCore):
         self._create_graph_inputs()
 
         # -------- Put custom architecture here --------
-
         # Video CNN
         fc1  = CustomLayers.multilayer_cnn(
                 input         = self.x,
@@ -51,8 +50,7 @@ class Net_3C_F(NetworkVPCore):
             fc1  = tf.concat([fc1, fc1_a], axis=1) # axis = 0 would concat batches instead 
 
         # Final layer must always be be called final_flat
-        self.final_flat = tf.layers.dense(fc1, units = 256, use_bias = True, activation=tf.nn.relu, name = 'fc1')
-
+        self.final_flat = tf.layers.dense(fc1, units=256, use_bias=True, activation=tf.nn.relu, name='fc1')
         # -------- End custom architecture here --------
         
         # Use shared parent class to construct graph outputs/objectives

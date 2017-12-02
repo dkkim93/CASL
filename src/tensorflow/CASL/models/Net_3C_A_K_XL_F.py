@@ -18,7 +18,6 @@ class Net_3C_A_K_XL_F(NetworkVPCore):
         self._create_graph_inputs()
 
         # -------- Put custom architecture here --------
-
         # Video CNN
         fc1_i = CustomLayers.multilayer_cnn(
                 input         = self.x,
@@ -52,22 +51,20 @@ class Net_3C_A_K_XL_F(NetworkVPCore):
             input = fc1_i
 
         # LSTM
-        rnn_out_dict, self.n_lstm_layers_total = CustomLayers.multilayer_lstm( input = input, 
-                                                                            n_lstm_layers_total = self.n_lstm_layers_total, 
-                                                                            global_rnn_state_in = self.rnn_state_in, 
-                                                                            global_rnn_state_out = self.rnn_state_out, 
-                                                                            base_name = '', 
-                                                                            seq_lengths = self.seq_lengths)
+        rnn_out_dict, self.n_lstm_layers_total = CustomLayers.multilayer_lstm(input=input, 
+                                                                              n_lstm_layers_total=self.n_lstm_layers_total, 
+                                                                              global_rnn_state_in=self.rnn_state_in, 
+                                                                              global_rnn_state_out=self.rnn_state_out, 
+                                                                              base_name='', 
+                                                                              seq_lengths=self.seq_lengths)
 
         # Save attention softmax probs for regularization
         if Config.USE_ATTENTION:
             if Config.ATTN_TYPE == Config.attn_multimodal:
                 self.attn_softmaxes = rnn_out_dict['attn_softmaxes']
-            # TODO temporal case
 
         # Output to NetworkVP
         self.final_flat = rnn_out_dict['lstm_outputs'] # Final layer must always be be called final_flat
-
         # -------- End custom architecture here --------
         
         # Use shared parent class to construct graph outputs/objectives

@@ -39,7 +39,7 @@ class NetworkVPCore(object):
         self.learning_rate  = Config.LEARNING_RATE_START
         self.beta           = Config.BETA_START
         if Config.USE_OPTIONS:
-            self.option_epsilon = Config.OPTION_EPSILON_START
+            self.option_epsilon    = Config.OPTION_EPSILON_START
             self.option_cost_delib = Config.COST_DELIB_START
         self.log_epsilon    = Config.LOG_EPSILON
         self.graph          = tf.Graph()
@@ -70,11 +70,11 @@ class NetworkVPCore(object):
             raise ValueError('User specific Config.USE_ATTENTION: ' + str(Config.USE_ATTENTION) + ', but selected Config.NET_ARCH: ' + str(Config.NET_ARCH))
 
     def _create_graph_inputs(self):
-        self.episode       = tf.Variable(0, dtype=tf.int32, name = 'episode')
+        self.episode       = tf.Variable(0, dtype=tf.int32, name='episode')
         self.x             = tf.placeholder(tf.float32, [None, self.img_height, self.img_width, self.img_channels], name='X')
         self.action_index  = tf.placeholder(tf.float32, [None, self.num_actions]) # NOTE this is a one-hot vector indicating action index. Doesn't match i_option format, should unify eventually.
         self.layer_tracker = []
-        self.y_r           = tf.placeholder(tf.float32, [None], name = 'Yr')
+        self.y_r           = tf.placeholder(tf.float32, [None], name='Yr')
         self.var_beta      = tf.placeholder(tf.float32, name='beta', shape=[])
 
         if Config.USE_AUDIO:
@@ -85,98 +85,85 @@ class NetworkVPCore(object):
             self.loss_mask = tf.placeholder(tf.float32, [None], name='loss_mask')
 
             # All LSTM inputs/outputs. All are stored/restored properly as a unified dict, so can have any crazy LSTM architectures desired.
-            self.rnn_state_in = CustomLayers.RNNInputStateHandler.get_rnn_dict()
+            self.rnn_state_in  = CustomLayers.RNNInputStateHandler.get_rnn_dict()
             self.rnn_state_out = CustomLayers.RNNInputStateHandler.get_rnn_dict()
             self.n_lstm_layers_total = 0
         else:
             self.loss_mask = 1.
 
         if Config.USE_OPTIONS:
-            self.option_index = tf.placeholder(tf.int32, [None], name = 'option_index')
+            self.option_index = tf.placeholder(tf.int32, [None], name='option_index')
             self.var_option_epsilon = tf.placeholder(tf.float32, name='option_epsilon', shape=[])
             self.var_option_cost_delib = tf.placeholder(tf.float32, name='option_cost_delib', shape=[])
 
     def _option_costs(self):
-        # TODO possible to merge option and non option code nicely actually. They are almost identical.
-
         # Create termination_model, option_q_model, and cur_intra_option_probs
-        self.option_q_model = tf.layers.dense(inputs = self.final_flat, units = Config.NUM_OPTIONS, activation = None, use_bias = True, name = 'option_q_model') # Shape: (batch, # of option)
-
-        #  self.option_v_model = (1. - self.var_option_epsilon)*tf.reduce_max(self.option_q_model, axis = 1) + self.var_option_epsilon*tf.reduce_mean(self.option_q_model, axis = 1)#TODO this was old one from theano code
-        self.option_v_model = (1. - self.var_option_epsilon)*tf.reduce_sum(tf.nn.softmax(self.option_q_model)*self.option_q_model, axis = 1)  + self.var_option_epsilon*tf.reduce_mean(self.option_q_model, axis = 1)
-
-        disc_option_v = tf.stop_gradient(self.option_v_model, name = 'disc_option_v')
-        self.cur_intra_option_probs = CustomLayers.IntraOptionPolicy(netcore = self, name = 'cur_intra_option_probs') # Shape: (batch, # of action)
-        self.termination_model = tf.layers.dense(inputs = self.final_flat, units = Config.NUM_OPTIONS, activation = tf.nn.sigmoid, use_bias = True, name = 'termination_model')
-
-        # TODO do the reduce_sum and masking all at once...to cut down computation
+        self.option_q_model = tf.layers.dense(inputs=self.final_flat, units=Config.NUM_OPTIONS, activation=None, use_bias=True, name='option_q_model') # Shape: (batch, # of option)
+        self.option_v_model = (1. - self.var_option_epsilon)*tf.reduce_sum(tf.nn.softmax(self.option_q_model)*self.option_q_model, axis=1) + self.var_option_epsilon*tf.reduce_mean(self.option_q_model, axis=1)
+        disc_option_v = tf.stop_gradient(self.option_v_model, name='disc_option_v')
+        self.cur_intra_option_probs = CustomLayers.IntraOptionPolicy(netcore=self, name='cur_intra_option_probs') # Shape: (batch, # of action)
+        self.termination_model = tf.layers.dense(inputs=self.final_flat, units=Config.NUM_OPTIONS, activation=tf.nn.sigmoid, use_bias=True, name='termination_model')
 
         # Cost: Critic (v) -- first gradient in paper Alg. 1
-        # TODO if you sample option_index here in future, make sure to put a stop gradient on it in both cur_option_q and cur_term_probs
         batch_size = tf.shape(self.final_flat)[0]
-        option_index_stacked = tf.stack((tf.range(start = 0,limit=batch_size, dtype=tf.int32), self.option_index), axis = 1) # Appends column of batch indices, needed for gather_nd
+        option_index_stacked = tf.stack((tf.range(start=0,limit=batch_size, dtype=tf.int32), self.option_index), axis=1) # Appends column of batch indices, needed for gather_nd
         cur_option_q = tf.gather_nd(self.option_q_model, option_index_stacked ) # Critic in option case is cur_option_q
-        disc_cur_option_q = tf.stop_gradient(cur_option_q, name = 'disc_cur_option_q') 
-        self.cost_critic = 0.5 * tf.reduce_sum(tf.square(self.y_r - cur_option_q)*self.loss_mask, axis = 0, name = 'cost_critic')/tf.reduce_sum(self.loss_mask) 
+        disc_cur_option_q = tf.stop_gradient(cur_option_q, name='disc_cur_option_q') 
+        self.cost_critic = 0.5*tf.reduce_sum(tf.square(self.y_r - cur_option_q)*self.loss_mask, axis=0, name='cost_critic')/tf.reduce_sum(self.loss_mask) 
 
         # Cost: Actor (intra_option policy and entropy)
         # Actor policy cost -- second gradient in paper Alg. 1 
-        cur_option_intra_q = tf.reduce_sum(self.cur_intra_option_probs * self.action_index, axis = 1, name = 'cur_option_intra_q')
-        #  self.cost_intra_option_policy = -1.*tf.reduce_sum(tf.log(tf.maximum(cur_option_intra_q, self.log_epsilon)) * (self.y_r - disc_cur_option_q) * self.loss_mask, axis = 0, name = 'cost_intra_option_policy')/tf.reduce_sum(self.loss_mask) # Negative since want to maximize reward J function
-        self.cost_intra_option_policy = -1.*tf.reduce_sum(tf.log(cur_option_intra_q+ self.log_epsilon) * (self.y_r - disc_cur_option_q) * self.loss_mask, axis = 0, name = 'cost_intra_option_policy')/tf.reduce_sum(self.loss_mask) # Negative since want to maximize reward J function
+        cur_option_intra_q = tf.reduce_sum(self.cur_intra_option_probs*self.action_index, axis=1, name='cur_option_intra_q')
+        self.cost_intra_option_policy = -1.*tf.reduce_sum(tf.log(cur_option_intra_q + self.log_epsilon)*(self.y_r - disc_cur_option_q)*self.loss_mask, axis=0, name='cost_intra_option_policy')/tf.reduce_sum(self.loss_mask) # Negative since want to maximize reward J function
 
         # Actor entropy cost
-        cost_intra_option_entropy = -1. * self.var_beta * tf.reduce_sum(tf.log(self.cur_intra_option_probs+ self.log_epsilon) * self.cur_intra_option_probs, axis = 1)
-        self.cost_intra_option_entropy_agg = -1.* tf.reduce_sum(cost_intra_option_entropy*self.loss_mask, axis = 0, name='intra_option_entropy')/tf.reduce_sum(self.loss_mask) #Negative since want to maximize entropy
+        cost_intra_option_entropy = -1.*self.var_beta*tf.reduce_sum(tf.log(self.cur_intra_option_probs+ self.log_epsilon)*self.cur_intra_option_probs, axis=1)
+        self.cost_intra_option_entropy_agg = -1.* tf.reduce_sum(cost_intra_option_entropy*self.loss_mask, axis=0, name='intra_option_entropy')/tf.reduce_sum(self.loss_mask) #Negative since want to maximize entropy
 
         # Termination cost -- third gradient in paper Alg. 1 
-        # TODO if you sample option_index here in future, make sure to put a stop gradient on it in both cur_option_q and cur_term_probs
-        self.cur_term_probs = tf.gather_nd(self.termination_model, option_index_stacked)
-        self.cost_termination = tf.reduce_sum(self.cur_term_probs*((disc_cur_option_q - disc_option_v + self.var_option_cost_delib + Config.COST_MARGIN))*self.loss_mask, axis = 0, name = 'cost_termination')/tf.reduce_sum(self.loss_mask) 
+        self.cur_term_probs   = tf.gather_nd(self.termination_model, option_index_stacked)
+        self.cost_termination = tf.reduce_sum(self.cur_term_probs*((disc_cur_option_q - disc_option_v + self.var_option_cost_delib + Config.COST_MARGIN))*self.loss_mask, axis=0, name='cost_termination')/tf.reduce_sum(self.loss_mask) 
 
         self.cost_all = self.cost_intra_option_policy + self.cost_intra_option_entropy_agg + self.cost_critic + self.cost_termination
 
         # Cost: attention entropy
         if Config.USE_ATTENTION:
             if Config.ATTN_TYPE == Config.attn_multimodal:
-                self.cost_attn_entrop = -1. * Config.BETA_ATTENTION * tf.reduce_sum(tf.log(tf.maximum(self.attn_softmaxes, self.log_epsilon)) * self.attn_softmaxes, axis=1)
-                self.cost_attn_entrop_agg = -1. * tf.reduce_sum(self.cost_attn_entrop*self.loss_mask, axis=0, name='cost_attn_entrop_agg')/tf.reduce_sum(self.loss_mask) # Negative since want to maximize entropy 
+                self.cost_attn_entrop = -1.*Config.BETA_ATTENTION*tf.reduce_sum(tf.log(tf.maximum(self.attn_softmaxes, self.log_epsilon))*self.attn_softmaxes, axis=1)
+                self.cost_attn_entrop_agg = -1.*tf.reduce_sum(self.cost_attn_entrop*self.loss_mask, axis=0, name='cost_attn_entrop_agg')/tf.reduce_sum(self.loss_mask) # Negative since want to maximize entropy 
             elif Config.ATTN_TYPE == Config.attn_temporal:
-                # TODO also add temporal attention regularizer
                 self.cost_attn_entrop_agg = 0
             self.cost_all += self.cost_attn_entrop_agg
 
     def _non_option_costs(self):
         # Cost: Critic (v) 
-        self.logits_v = tf.squeeze(tf.layers.dense(inputs=self.final_flat, units=1, use_bias = True, activation=None, name = 'logits_v'), axis=[1])
-        self.cost_v = 0.5 * tf.reduce_sum(tf.square(self.y_r - self.logits_v)*self.loss_mask, axis=0)/tf.reduce_sum(self.loss_mask)
+        self.logits_v = tf.squeeze(tf.layers.dense(inputs=self.final_flat, units=1, use_bias=True, activation=None, name='logits_v'), axis=[1])
+        self.cost_v = 0.5*tf.reduce_sum(tf.square(self.y_r - self.logits_v)*self.loss_mask, axis=0)/tf.reduce_sum(self.loss_mask)
 
         # Cost: Actor (p advantage and entropy) 
         # Actor advantage cost
-        self.logits_p = tf.layers.dense(inputs = self.final_flat, units = self.num_actions, name = 'logits_p', activation = None)
+        self.logits_p = tf.layers.dense(inputs=self.final_flat, units=self.num_actions, name='logits_p', activation=None)
         self.softmax_p = tf.nn.softmax(self.logits_p) 
         self.selected_action_prob = tf.reduce_sum(self.softmax_p * self.action_index, axis=1, name='selection_action_prob')
-        self.cost_p_advant = tf.log(tf.maximum(self.selected_action_prob, self.log_epsilon)) * (self.y_r - tf.stop_gradient(self.logits_v))  # Stop_gradient ensures the value gradient feedback doesn't contribute to policy learning
-        self.cost_p_advant_agg = -1.* tf.reduce_sum(self.cost_p_advant*self.loss_mask, axis=0, name='cost_p_advant_agg')/tf.reduce_sum(self.loss_mask) # Negative since want to maximize reward J function
+        self.cost_p_advant = tf.log(tf.maximum(self.selected_action_prob, self.log_epsilon))*(self.y_r - tf.stop_gradient(self.logits_v)) # Stop_gradient ensures the value gradient feedback doesn't contribute to policy learning
+        self.cost_p_advant_agg = -1.*tf.reduce_sum(self.cost_p_advant*self.loss_mask, axis=0, name='cost_p_advant_agg')/tf.reduce_sum(self.loss_mask) # Negative since want to maximize reward J function
 
         # Actor entropy cost
-        self.cost_p_entrop = -1. * self.var_beta *  tf.reduce_sum(tf.log(tf.maximum(self.softmax_p, self.log_epsilon)) * self.softmax_p, axis=1)
-        self.cost_p_entrop_agg = -1.* tf.reduce_sum(self.cost_p_entrop*self.loss_mask, axis=0, name='cost_p_entrop_agg')/tf.reduce_sum(self.loss_mask) #Negative since want to maximixe entropy
+        self.cost_p_entrop = -1.*self.var_beta*tf.reduce_sum(tf.log(tf.maximum(self.softmax_p, self.log_epsilon))*self.softmax_p, axis=1)
+        self.cost_p_entrop_agg = -1.*tf.reduce_sum(self.cost_p_entrop*self.loss_mask, axis=0, name='cost_p_entrop_agg')/tf.reduce_sum(self.loss_mask) #Negative since want to maximixe entropy
 
         self.cost_all = self.cost_p_advant_agg + self.cost_p_entrop_agg + self.cost_v
 
         # Cost: attention entropy
         if Config.USE_ATTENTION:
             if Config.ATTN_TYPE == Config.attn_multimodal:
-                self.cost_attn_entrop = -1. * Config.BETA_ATTENTION * tf.reduce_sum(tf.log(tf.maximum(self.attn_softmaxes, self.log_epsilon)) * self.attn_softmaxes, axis=1)
-                self.cost_attn_entrop_agg = -1. * tf.reduce_sum(self.cost_attn_entrop*self.loss_mask, axis=0, name='cost_attn_entrop_agg')/tf.reduce_sum(self.loss_mask) # Negative since want to maximize entropy 
+                self.cost_attn_entrop = -1.*Config.BETA_ATTENTION*tf.reduce_sum(tf.log(tf.maximum(self.attn_softmaxes, self.log_epsilon))*self.attn_softmaxes, axis=1)
+                self.cost_attn_entrop_agg = -1.*tf.reduce_sum(self.cost_attn_entrop*self.loss_mask, axis=0, name='cost_attn_entrop_agg')/tf.reduce_sum(self.loss_mask) # Negative since want to maximize entropy 
             elif Config.ATTN_TYPE == Config.attn_temporal:
-                # TODO also add temporal attention regularizer
                 self.cost_attn_entrop_agg = 0
             self.cost_all += self.cost_attn_entrop_agg
 
-    def ClipIfNotNone(self,grad):
-        # If gradient is zero, tf returns None, which clipper does not like
+    def ClipIfNotNone(self, grad):
         if grad is None:
             return grad
         return tf.clip_by_average_norm(grad, Config.GRAD_CLIP_NORM)
@@ -191,10 +178,10 @@ class NetworkVPCore(object):
         # Optimizer
         self.var_learning_rate = tf.placeholder(tf.float32, name='lr', shape=[])
         if Config.OPTIMIZER == Config.OPT_RMSPROP:
-            self.opt = tf.train.RMSPropOptimizer(learning_rate = self.var_learning_rate,
-                                                 decay = Config.RMSPROP_DECAY,
-                                                 momentum = Config.RMSPROP_MOMENTUM,
-                                                 epsilon = Config.RMSPROP_EPSILON)
+            self.opt = tf.train.RMSPropOptimizer(learning_rate=self.var_learning_rate,
+                                                 decay=Config.RMSPROP_DECAY,
+                                                 momentum=Config.RMSPROP_MOMENTUM,
+                                                 epsilon=Config.RMSPROP_EPSILON)
         elif Config.OPTIMIZER == Config.OPT_ADAM:
             self.opt = tf.train.AdamOptimizer(learning_rate=self.var_learning_rate)
         else:
@@ -211,6 +198,7 @@ class NetworkVPCore(object):
 
     def _create_tensorboard(self):
         summaries = tf.get_collection(tf.GraphKeys.SUMMARIES)
+
         summaries.append(tf.summary.scalar("LearningRate", self.var_learning_rate))
         summaries.append(tf.summary.scalar("Beta - policy entropy coef", self.var_beta))
         summaries.append(tf.summary.histogram("activation_final_flat", self.final_flat))
@@ -241,8 +229,6 @@ class NetworkVPCore(object):
 
         for layer in self.layer_tracker:
             summaries.append(tf.summary.histogram(layer.name, layer))
-        #  summaries.append(tf.summary.image("x_frame", self.x))
-        #  summaries.append(tf.summary.image("x_audio", self.input_audio))
 
         self.summary_op = tf.summary.merge(summaries)
         self.log_writer = tf.summary.FileWriter(os.path.join(Config.LOGDIR), self.sess.graph)
@@ -254,7 +240,7 @@ class NetworkVPCore(object):
             return {self.var_beta: self.beta, self.var_learning_rate: self.learning_rate}
 
     def update_feed_dict(self, feed_dict, x, audio, rnn_state, is_training, y_r = None, 
-                                    a = None, i_option = None, seq_lengths = None, loss_mask = None):
+                         a = None, i_option = None, seq_lengths = None, loss_mask = None):
         if is_training:
             feed_dict.update({self.y_r: y_r, self.action_index: a})
 
@@ -284,7 +270,6 @@ class NetworkVPCore(object):
 
                 if Config.USE_ATTENTION:
                     if Config.ATTN_TYPE == Config.attn_multimodal:
-                        # TODO technically dont need to even send back attn_state for the multimodal attention case
                         attn_stateb = np.zeros((batch_size, Config.NMODES))
                         feed_dict.update({self.rnn_state_in['attn_state'][i_lstm_layer]: attn_stateb})
                     if Config.ATTN_TYPE == Config.attn_temporal:
@@ -302,25 +287,25 @@ class NetworkVPCore(object):
     def predict_p_and_v(self, x, audio, rnn_state, i_option):
         batch_size = x.shape[0]
         feed_dict = self._get_base_feed_dict()
-        self.update_feed_dict(feed_dict = feed_dict, x = x, audio = audio, rnn_state = rnn_state, i_option = i_option, is_training = False)
+        self.update_feed_dict(feed_dict=feed_dict, x=x, audio=audio, rnn_state=rnn_state, i_option=i_option, is_training=False)
 
         if Config.USE_RNN:
-            # TODO Take care of the leftover cases later. But is there cleaner way than having many if else statement? Brain interface might be an answer.
+            # NOTE: Due to many choices in Config, there are many if else statements. We will clean up this in the near future.
             if Config.USE_ATTENTION:
                 if Config.ATTN_TYPE == Config.attn_multimodal:
                     if Config.USE_OPTIONS:
                         cur_intra_option_probs, option_v_model, option_q_model, termination, rnn_state_out, attn = \
-                        self.sess.run([self.cur_intra_option_probs, self.option_v_model, self.option_q_model, self.termination_model, self.rnn_state_out, self.attn_softmaxes], feed_dict = feed_dict)
+                        self.sess.run([self.cur_intra_option_probs, self.option_v_model, self.option_q_model, self.termination_model, self.rnn_state_out, self.attn_softmaxes], feed_dict=feed_dict)
                     else:
-                        p, v, rnn_state_out, attn = self.sess.run([self.softmax_p, self.logits_v, self.rnn_state_out, self.attn_softmaxes], feed_dict = feed_dict)
+                        p, v, rnn_state_out, attn = self.sess.run([self.softmax_p, self.logits_v, self.rnn_state_out, self.attn_softmaxes], feed_dict=feed_dict)
                 elif Config.ATTN_TYPE == Config.attn_temporal:
                     p, v, rnn_state_out = self.sess.run([self.softmax_p,  self.logits_v, self.rnn_state_out], feed_dict=feed_dict)
             else:
                 if Config.USE_OPTIONS:
                     cur_intra_option_probs, option_v_model, option_q_model, termination, rnn_state_out = \
-                    self.sess.run([self.cur_intra_option_probs, self.option_v_model, self.option_q_model, self.termination_model, self.rnn_state_out], feed_dict = feed_dict)
+                    self.sess.run([self.cur_intra_option_probs, self.option_v_model, self.option_q_model, self.termination_model, self.rnn_state_out], feed_dict=feed_dict)
                 else:
-                    p, v, rnn_state_out = self.sess.run([self.softmax_p, self.logits_v, self.rnn_state_out], feed_dict = feed_dict)
+                    p, v, rnn_state_out = self.sess.run([self.softmax_p, self.logits_v, self.rnn_state_out], feed_dict=feed_dict)
 
             # Update RNN states for next round. Also put them in batch-major order (for threadpredictor)
             rnn_state_out_batched = [None]*batch_size 
@@ -328,7 +313,6 @@ class NetworkVPCore(object):
                 mdict = [{'c': None, 'h': None, 'attn_state': None, 'attn_state_hist': None} for i_layer in xrange(self.n_lstm_layers_total)] 
                 rnn_state_out_batched[i_batch] = mdict
                 for i_layer in xrange(self.n_lstm_layers_total):
-                    # TODO probably faster to do this with np.transpose, since it just returns a view of the data
                     rnn_state_out_batched[i_batch][i_layer]['c'] = rnn_state_out['c'][i_layer][i_batch] 
                     rnn_state_out_batched[i_batch][i_layer]['h'] = rnn_state_out['h'][i_layer][i_batch]
 
@@ -339,7 +323,7 @@ class NetworkVPCore(object):
         else:
             if Config.USE_OPTIONS:
                 cur_intra_option_probs, option_v_model, option_q_model, termination= \
-                self.sess.run([self.cur_intra_option_probs, self.option_v_model, self.option_q_model, self.termination_model], feed_dict = feed_dict)
+                self.sess.run([self.cur_intra_option_probs, self.option_v_model, self.option_q_model, self.termination_model], feed_dict=feed_dict)
             else:
                 p, v = self.sess.run([self.softmax_p, self.logits_v], feed_dict=feed_dict)
 
@@ -350,7 +334,6 @@ class NetworkVPCore(object):
         if Config.USE_RNN:
             predict_dict_batched['rnn_state_out'] = rnn_state_out_batched
             if Config.USE_ATTENTION and Config.ATTN_TYPE == Config.attn_multimodal:
-                # TODO take care of temporal attn in 
                 predict_dict_batched['attn'] = attn
         
         return predict_dict_batched
@@ -367,15 +350,15 @@ class NetworkVPCore(object):
 
     def train(self, x, audio, y_r, a, i_option, rnn_state, seq_lengths):
         feed_dict = self._get_base_feed_dict()
-        self.update_feed_dict(feed_dict, x, audio, rnn_state, is_training = True, y_r = y_r, 
-                                         a = a, i_option = i_option, seq_lengths = seq_lengths, 
-                                         loss_mask = self.create_loss_mask(seq_lengths))
+        self.update_feed_dict(feed_dict, x, audio, rnn_state, is_training = True, y_r=y_r, 
+                              a=a, i_option=i_option, seq_lengths=seq_lengths, 
+                              loss_mask=self.create_loss_mask(seq_lengths))
         self.sess.run(self.train_op, feed_dict=feed_dict)
 
     def log(self, ep_count, x, audio, y_r, a, i_option, rnn_state, seq_lengths, reward, roll_reward):
         feed_dict = self._get_base_feed_dict()
-        self.update_feed_dict(feed_dict, x, audio, rnn_state, is_training = True, y_r = y_r, 
-                                         a = a, i_option = i_option, seq_lengths = seq_lengths, loss_mask = self.create_loss_mask(seq_lengths))
+        self.update_feed_dict(feed_dict, x, audio, rnn_state, is_training=True, y_r=y_r, 
+                              a=a, i_option=i_option, seq_lengths=seq_lengths, loss_mask=self.create_loss_mask(seq_lengths))
 
         summary = self.sess.run(self.summary_op, feed_dict=feed_dict)
         self.log_writer.add_summary(summary, ep_count)
@@ -400,14 +383,12 @@ class NetworkVPCore(object):
 
         if Config.LOAD_EPISODE > 0:
             filename = self._checkpoint_filename(Config.LOAD_EPISODE)
-
         try:
             self.saver.restore(self.sess, filename)
         except:
             raise ValueError('Error importing checkpoint! Are you sure checkpoint %s exists?' %self._checkpoint_filename())
 
         return self.sess.run(self.episode)
-
 
     def get_variables_names(self):
         return [var.name for var in self.graph.get_collection('trainable_variables')]

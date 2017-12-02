@@ -1,77 +1,63 @@
+import time, collections
 import tensorflow as tf
 import numpy as np
-import time
-import collections
 from Config import Config
 from tensorflow.contrib import rnn
-from tensorflow.contrib.cudnn_rnn import CudnnLSTM
 from tensorflow.python.util import nest
 from tensorflow.python.ops import rnn_cell_impl
+from tensorflow.contrib.cudnn_rnn import CudnnLSTM
 
 def IntraOptionPolicy(netcore, name):
     feat_size = netcore.final_flat.get_shape().as_list()[1]
     limits = (6./np.sqrt(feat_size + netcore.num_actions))/Config.NUM_OPTIONS
     W = tf.get_variable('W_intra_option',
-                        shape = [Config.NUM_OPTIONS, feat_size, netcore.num_actions],
-                        dtype = tf.float32,
-                        initializer = tf.random_uniform_initializer(-limits,limits))
+                        shape=[Config.NUM_OPTIONS, feat_size, netcore.num_actions],
+                        dtype=tf.float32,
+                        initializer=tf.random_uniform_initializer(-limits,limits))
     b = tf.get_variable('b_intra_option',
-                        shape = [Config.NUM_OPTIONS, netcore.num_actions],
-                        dtype = tf.float32,
-                        initializer = tf.random_uniform_initializer(-limits,limits))
+                        shape=[Config.NUM_OPTIONS, netcore.num_actions],
+                        dtype=tf.float32,
+                        initializer=tf.random_uniform_initializer(-limits,limits))
 
-    # NOTE tf.gather outputs zeros by design for invalid indices. Should not be an issue though. 
-    W_option = tf.gather(W, netcore.option_index, axis = 0) 
-    b_option = tf.gather(b, netcore.option_index, axis = 0)
+    # NOTE tf.gather outputs zeros by design for invalid indices. But, it is not an issue.
+    W_option = tf.gather(W, netcore.option_index, axis=0) 
+    b_option = tf.gather(b, netcore.option_index, axis=0)
 
-    out = tf.matmul(tf.expand_dims(netcore.final_flat, axis = 1), W_option)
-    out = tf.squeeze(out, axis = 1) + b_option
+    out = tf.matmul(tf.expand_dims(netcore.final_flat, axis=1), W_option)
+    out = tf.squeeze(out, axis=1) + b_option
 
     return tf.nn.softmax(out, name = name)
 
 def multilayer_cnn(input, n_conv_layers, layer_tracker, filters, kernel_size, strides, use_bias, padding, activation, base_name):
     for i_conv in xrange(0,n_conv_layers):
-        layer_tracker.append(tf.layers.conv2d(inputs=input, filters=filters, kernel_size=kernel_size, strides=strides, use_bias=use_bias, padding=padding, activation=activation, name= '%s%s' % (base_name,str(i_conv))))
+        layer_tracker.append(tf.layers.conv2d(inputs=input, filters=filters, kernel_size=kernel_size, strides=strides,
+                                              use_bias=use_bias, padding=padding, activation=activation, name='%s%s' % (base_name,str(i_conv))))
         input = layer_tracker[-1]
-    return tf.contrib.layers.flatten(layer_tracker[-1])
 
-def transpose_batch_time(x):
-    x_static_shape = x.get_shape()
-    if x_static_shape.ndims is not None and x_static_shape.ndims < 2:
-        raise ValueError(
-            "Expected input tensor %s to have rank at least 2, but saw shape: %s" %
-            (x, x_static_shape))
-    x_rank = tf.rank(x)
-    x_t = tf.transpose(
-        x, tf.concat(
-          ([1, 0], tf.range(2, x_rank)), axis=0))
-    x_t.set_shape(
-          tf.TensorShape([
-              x_static_shape[1].value, x_static_shape[0].value
-          ]).concatenate(x_static_shape[2:]))
-    return x_t
+    return tf.contrib.layers.flatten(layer_tracker[-1])
 
 def lstm_layer(input, out_dim, global_rnn_state_in, seq_lengths, name, reuse=False):
     with tf.variable_scope(name, reuse=reuse):
         batch_size = tf.shape(seq_lengths)[0]
-        input_reshaped, initial_state_input = RNNInputStateHandler.process_input_state(batch_size,input,global_rnn_state_in)
-        cell_lstm = rnn.LSTMCell(num_units = out_dim, state_is_tuple = True)  
+        input_reshaped, initial_state_input = RNNInputStateHandler.process_input_state(batch_size, input, global_rnn_state_in)
+        cell_lstm = rnn.LSTMCell(num_units = out_dim, state_is_tuple=True)  
         if Config.USE_ATTENTION:
             cell = AttentionCellWrapper(cell_lstm, project_output=False) 
         else:
             cell = cell_lstm
-        outputs, state = tf.nn.dynamic_rnn( cell,
-                                            input_reshaped,
-                                            initial_state=initial_state_input,
-                                            sequence_length=seq_lengths,
-                                            time_major=False)
+        outputs, state = tf.nn.dynamic_rnn(cell,
+                                           input_reshaped,
+                                           initial_state=initial_state_input,
+                                           sequence_length=seq_lengths,
+                                           time_major=False)
+
         return outputs, state
 
 class RNNInputStateHandler():
     @classmethod
     def process_input_state(cls,batch_size,input,global_rnn_state_in):
-        # TODO if lstm_layer>1
-        state_tuple = cls.get_state_tuple(global_rnn_state_in, is_global_state = True)
+        # NOTE Not implemented yet for lstm_layer>1
+        state_tuple = cls.get_state_tuple(global_rnn_state_in, is_global_state=True)
 
         if Config.USE_ATTENTION:
             if Config.ATTN_TYPE == Config.attn_multimodal:
@@ -96,19 +82,19 @@ class RNNInputStateHandler():
             if Config.ATTN_TYPE == Config.attn_multimodal:
                 if is_global_state:
                     state_tuple = AttnMultimodalState(rnn.LSTMStateTuple(rnn_state_in['c'][-1], rnn_state_in['h'][-1]), 
-                                                           rnn_state_in['attn_state'][-1]) 
+                                                      rnn_state_in['attn_state'][-1]) 
                 else:
                     state_tuple = AttnMultimodalState(rnn_state_in['lstm_state'], 
-                                                           rnn_state_in['attn_state']) 
+                                                      rnn_state_in['attn_state']) 
             elif Config.ATTN_TYPE == Config.attn_temporal:
                 if is_global_state:
                     state_tuple = AttnTemporalState(rnn.LSTMStateTuple(rnn_state_in['c'][-1], rnn_state_in['h'][-1]), 
-                                                           rnn_state_in['attn_state'][-1], 
-                                                           rnn_state_in['attn_state_hist'][-1])  
+                                                    rnn_state_in['attn_state'][-1], 
+                                                    rnn_state_in['attn_state_hist'][-1])  
                 else:
                     state_tuple = AttnTemporalState(rnn_state_in['lstm_state'], 
-                                                           rnn_state_in['attn_state'], 
-                                                           rnn_state_in['attn_state_hist'])
+                                                    rnn_state_in['attn_state'], 
+                                                    rnn_state_in['attn_state_hist'])
         else:
             if is_global_state:
                 state_tuple = rnn.LSTMStateTuple(rnn_state_in['c'][-1], rnn_state_in['h'][-1]) 
@@ -126,7 +112,6 @@ class RNNInputStateHandler():
 
     @staticmethod
     def get_rnn_dict(init_with_zeros=False, n_lstm_layers_total=None):
-        # TODO see https://stackoverflow.com/questions/5558418/list-of-dicts-to-from-dict-of-lists for numpy indexing with strings, to avoids dicts altogether
         if init_with_zeros:
             assert n_lstm_layers_total is not None
             if Config.USE_ATTENTION:
@@ -169,9 +154,8 @@ class RNNInputStateHandler():
                 lstm_outputs, attn_softmaxes = outputs
                 attn_softmaxes = tf.reshape(attn_softmaxes, [-1, Config.NMODES]) #(B,TMAX,I)-->(B*TMAX,I)
                 lstm_outputs = tf.reshape(lstm_outputs, [-1, Config.NCELLS])
-                return {'lstm_outputs' : lstm_outputs, 'attn_softmaxes' : attn_softmaxes} #TODO for multilayer case, softmaxes should be tracked for all layers, but outputs only need to be passed to next layer
+                return {'lstm_outputs' : lstm_outputs, 'attn_softmaxes' : attn_softmaxes}
             elif Config.ATTN_TYPE == Config.attn_temporal:
-                # TODO handle temporal case, where softmax is also output and has to be regularized
                 lstm_outputs = tf.reshape(outputs, [-1, Config.NCELLS])
                 return {'lstm_outputs':lstm_outputs}
         else:
@@ -261,14 +245,12 @@ class AttentionCellWrapper(rnn_cell_impl.RNNCell):
         if Config.ATTN_TYPE == Config.attn_multimodal:
             return (Config.NCELLS,Config.NMODES)
         if Config.ATTN_TYPE == Config.attn_temporal:
-            # TODO also have to updates for temporal case if want to regularize softmaxes
             return Config.NCELLS
 
     def call(self, inputs, state):
         if Config.ATTN_TYPE == Config.attn_multimodal:
             # Attend using prev lstm state
             lstm_state, prev_attn_softmax = state
-            # TODO should handle multilayer case correctly
             input_i = inputs[:,0,:]
             input_a = inputs[:,1,:]
             attn_dim = Config.NCELLS
@@ -279,7 +261,8 @@ class AttentionCellWrapper(rnn_cell_impl.RNNCell):
             lstm_output = (lstm_output, cur_attn_softmax)
 
             # Postprocess
-            new_state = RNNInputStateHandler.get_state_tuple({'lstm_state' : lstm_state, 'attn_state' : cur_attn_softmax}, is_global_state = False)
+            new_state = RNNInputStateHandler.get_state_tuple({'lstm_state' : lstm_state, 'attn_state' : cur_attn_softmax}, is_global_state=False)
+
         elif Config.ATTN_TYPE == Config.attn_temporal:
             # Attend using prev attn_state
             state, attn_state, attn_state_hist = state
@@ -296,7 +279,7 @@ class AttentionCellWrapper(rnn_cell_impl.RNNCell):
 
             # Projection layer
             if self._project_output: 
-                with tf.variable_scope("attn_output_projection"): # TODO probably have to add the lstm name to this scope
+                with tf.variable_scope("attn_output_projection"):
                     output = rnn_cell_impl._linear(args=[lstm_output, new_attn_state], output_size=Config.ATTN_STATE_NCELLS, bias=True)
             else:
                 output = new_attn_state
@@ -304,7 +287,8 @@ class AttentionCellWrapper(rnn_cell_impl.RNNCell):
             # Postprocess
             new_attn_state_hist = tf.concat( [new_attn_state_hist, tf.expand_dims(output, 1)], 1) # Concats latest output to new_attn_state_hist
             new_attn_state_hist = tf.reshape( new_attn_state_hist, [-1, Config.ATTN_TEMPORAL_WINDOW * Config.ATTN_STATE_NCELLS])
-            new_state = RNNInputStateHandler.get_state_tuple({'lstm_state' : lstm_state, 'attn_state' : new_attn_state, 'attn_state_hist' : new_attn_state_hist}, is_global_state = False)
+            new_state = RNNInputStateHandler.get_state_tuple({'lstm_state' : lstm_state, 'attn_state' : new_attn_state, 'attn_state_hist' : new_attn_state_hist}, is_global_state=False)
+
         else:
             raise ValueError('Invalid Config.ATTN_TYPE selected. Check Config.py!')
 
@@ -316,21 +300,21 @@ class AttentionCellWrapper(rnn_cell_impl.RNNCell):
         linear_h = tf.layers.dense(inputs=input_h, units=attn_dim, activation=None, name='linear_h')
 
         tanh_layer = tf.add_n([linear_i, linear_a, linear_h]) 
-        tanh_layer = tf.layers.dense(inputs = tanh_layer, units = attn_dim, activation = tf.tanh, name = 'tanh_layer')
+        tanh_layer = tf.layers.dense(inputs=tanh_layer, units=attn_dim, activation=tf.tanh, name='tanh_layer')
         
-        softmax_attention = tf.layers.dense(inputs = tanh_layer, units = Config.NMODES, activation = tf.nn.softmax, name = 'softmax_attention')
+        softmax_attention = tf.layers.dense(inputs=tanh_layer, units=Config.NMODES, activation=tf.nn.softmax, name='softmax_attention')
         feat_i_attention = tf.multiply(input_i, tf.reshape(softmax_attention[:,0], [-1,1]), name='feat_i_attention')
         feat_a_attention = tf.multiply(input_a, tf.reshape(softmax_attention[:,1], [-1,1]), name='feat_a_attention')
 
         if fusion_mode == self.FUSION_SUM:
             fused_layer = tf.add(feat_i_attention, feat_a_attention, name='fused_layer')
         elif fusion_mode == self.FUSION_CONC:
-            fused_layer = tf.concat([feat_i_attention, feat_a_attention], axis = 1, name = 'fused_layer')
+            fused_layer = tf.concat([feat_i_attention, feat_a_attention], axis=1, name='fused_layer')
 
         return fused_layer, softmax_attention 
 
     def _attention_temporal(self, query, attn_state_hist):
-        with tf.variable_scope("attention"): # TODO probably have to add the lstm name to this scope
+        with tf.variable_scope("attention"): 
             k = tf.get_variable("attn_w", [1, 1, Config.ATTN_STATE_NCELLS, self._attn_vec_size])
             v = tf.get_variable("attn_v", [self._attn_vec_size])
 
@@ -341,7 +325,7 @@ class AttentionCellWrapper(rnn_cell_impl.RNNCell):
             s = tf.reduce_sum(v * tf.tanh(hidden_features + y), [2, 3]) # [0] is batch, [1] is temporal window, [2] and [3] not sure
 
             a = tf.nn.softmax(s)
-            d = tf.reduce_sum( tf.reshape(a, [-1, Config.ATTN_TEMPORAL_WINDOW, 1, 1]) * hidden, [1, 2])
+            d = tf.reduce_sum( tf.reshape(a, [-1, Config.ATTN_TEMPORAL_WINDOW, 1, 1])*hidden, [1, 2])
             new_attn_state = tf.reshape(d, [-1, Config.ATTN_STATE_NCELLS])
             new_attn_state_hist = tf.slice(attn_state_hist, [0, 1, 0], [-1, -1, -1]) # Removes oldest element from new_attn_state_hist
 
@@ -352,8 +336,7 @@ def multilayer_lstm(input, n_lstm_layers_total, global_rnn_state_in, global_rnn_
         RNNInputStateHandler.append_rnn_placeholders(global_rnn_state_in, base_name, lstm_count)
         rnn_out, rnn_final_tuple = lstm_layer(input, Config.NCELLS, global_rnn_state_in, seq_lengths, '%s%s%s' % ('rnn_', base_name, str(lstm_count)))
         RNNInputStateHandler.update_global_state_dict(global_rnn_state_out, rnn_final_tuple)
-        # TODO for multilayer support, here extract the outputs for the next layer, and make sure to handle all the softmax regularizations in all layers 
-        input = rnn_out #TODO doesnt work for multilayer case due to new rnn output form!
+        input = rnn_out # NOTE this does not work for lstm_layer>1
     n_lstm_layers_total += Config.NUM_LAYERS_PER_LSTM
 
     return RNNInputStateHandler.get_output_dict_from_output_tuple(rnn_out), n_lstm_layers_total

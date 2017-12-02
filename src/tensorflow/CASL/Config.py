@@ -66,7 +66,7 @@ class Config:
             HARD_MODE  = True  # If TRANSFER_MODE, set harder environment
         SIMPLE_RENDER  = True  # Option whether to show simple vis or more complex vis with characters, items, etc
 
-    # SDWORLD GAME PARAMETER
+    # MINECRAFT GAME PARAMETER
     elif GAME_CHOICE == game_minecraft:
         REWARD_MIN     = -100  # Reward Clipping
         REWARD_MAX     = 100   # Reward Clipping
@@ -77,6 +77,16 @@ class Config:
         LISTEN_RANGE   = 1.5   # Distance needed to listen to a target
         TIMER_DURATION = 0.001 # In second visualization time for each step
         SIMPLE_RENDER  = False # Option whether to show simple vis or more complex vis with characters, items, etc
+
+    # ALE GAME PARAMETER
+    elif GAME_CHOICE == game_ale:
+        NUM_ACTIONS    = 10 # NOTE Depends on game (pong:6, seaquest: 18, amidar: 10)
+        ATARI_GAME     = 'amidar'# Name of the game, with version (e.g. PongDeterministic-v0)
+        REWARD_MIN     = -1 # Reward Clipping
+        REWARD_MAX     = 1  # Reward Clipping
+        AUDIO_FREQ     = 30720 # Audio frequency
+        WINLEN         = 0.010 # Window length for MFCC conversion
+        WINSTEP        = 0.003 # Window Step for MFCC conversion
 
     #########################################################################
     # NET ARCHITECTURE
@@ -124,7 +134,7 @@ class Config:
     DISCOUNT                = 0.99    # Discount factor
     TIME_MAX                = 10      # Tmax
     MAX_QUEUE_SIZE          = 100     # Max size of the queue
-    PREDICTION_BATCH_SIZE   = 128     # I think this just has to be > AGENTS
+    PREDICTION_BATCH_SIZE   = 128     # > AGENTS
     IMAGE_WIDTH             = 84      # Input size of the DNN
     IMAGE_HEIGHT            = 84      # Input size of the DNN
     EPISODES                = 4000000 # Total number of episodes and annealing frequency

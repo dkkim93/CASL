@@ -32,9 +32,13 @@ from Server import Server
 
 def assert_config():
     if Config.USE_ATTENTION:
-        if not Config.USE_RNN: raise ValueError("Config.USE_ATTENTION requires Config.USE_RNN == True!")
+        if not Config.USE_RNN: 
+            raise ValueError("Config.USE_ATTENTION requires Config.USE_RNN == True!")
         if Config.ATTN_TYPE == Config.attn_multimodal:
-            if not Config.USE_AUDIO: raise ValueError("Config.ATTN_TYPE == attend_multimodal requires Config.USE_AUDIO == True, otherwise nothing to attend!")
+            if not Config.USE_AUDIO: 
+                raise ValueError("Config.ATTN_TYPE == attend_multimodal requires Config.USE_AUDIO == True, otherwise nothing to attend!")
+        if Config.ATTN_TYPE == Config.attn_temporal:
+                raise ValueError("Not implemented yet!")
 
 if __name__ == '__main__':
     assert_config()
@@ -48,14 +52,14 @@ if __name__ == '__main__':
 
     # Adjust configs for Play mode
     if Config.PLAY_MODE:
-        Config.DISPLAY_SCREEN = True
-        Config.AGENTS = 1
-        Config.PREDICTORS = 1
-        Config.TRAINERS = 0 
+        Config.DISPLAY_SCREEN   = True
+        Config.AGENTS           = 1
+        Config.PREDICTORS       = 1
+        Config.TRAINERS         = 0 
         Config.DYNAMIC_SETTINGS = False
-        Config.LOAD_CHECKPOINT = True
-        Config.TRAIN_MODELS = False
-        Config.SAVE_MODELS = False
+        Config.LOAD_CHECKPOINT  = True
+        Config.TRAIN_MODELS     = False
+        Config.SAVE_MODELS      = False
 
     # Start main program
     Server().main()

@@ -29,22 +29,22 @@ from datetime import datetime
 class Config:
     #########################################################################
     # GENERAL PARAMETERS
-    CODE_DIR                          = os.path.dirname(__file__)
+    CODE_DIR            = os.path.dirname(__file__)
     game_doorpuzzle, 
     game_minecraft,
-    game_ale                          = range(3)  # Initialize game types as enum
-    GAME_CHOICE                       = game_ale
-    USE_AUDIO                         = True      # Enable audio input
-    TRAIN_MODELS                      = False     # Enable to train
-    PLAY_MODE                         = True      # Enable to see the trained agent in action (for testing)
-    LOAD_EPISODE                      = 0         # If 0, the latest checkpoint is loaded
-    LOAD_CHECKPOINT                   = True      # Load old models. Throws if the model doesn't exist
-    VIS_TRAIN                         = False     # Visualize train process
-    VIS_FREQUENCY                     = 500       # Unit in episode
+    game_ale            = range(3)  # Initialize game types as enum
+    GAME_CHOICE         = game_ale
+    USE_AUDIO           = True      # Enable audio input
+    TRAIN_MODELS        = False     # Enable to train
+    PLAY_MODE           = True      # Enable to see the trained agent in action (for testing)
+    LOAD_EPISODE        = 0         # If 0, the latest checkpoint is loaded
+    LOAD_CHECKPOINT     = True      # Load old models. Throws if the model doesn't exist
+    VIS_TRAIN           = False     # Visualize train process
+    VIS_FREQUENCY       = 500       # Enable Vis during trainig every VIS_FREQUENCY
     if LOAD_CHECKPOINT:
-        LOGDIR                        = os.path.join('tmp-logs', '2017-10-30_20h-12m-47s')
+        LOGDIR          = os.path.join('tmp-logs', '2017-10-30_20h-12m-47s')
     else:
-        LOGDIR                        = os.path.join('tmp-logs', datetime.now().strftime("%Y-%m-%d_%Hh-%Mm-%Ss"))
+        LOGDIR          = os.path.join('tmp-logs', datetime.now().strftime("%Y-%m-%d_%Hh-%Mm-%Ss"))
 
     #########################################################################
     # MAZEWORLD GAME PARAMETER

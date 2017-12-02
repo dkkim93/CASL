@@ -24,18 +24,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import sys, time, cv2, os
-if sys.version_info >= (3,0): from queue import Queue
-else: from Queue import Queue
 import seaborn as sns
 import numpy as np
 import scipy.misc as misc
 import matplotlib.pyplot as plt
+if sys.version_info >= (3,0): from queue import Queue
+else: from Queue import Queue
 from Config import Config
-from GameManager import GameManager
-from Gridworld_Audio import Gridworld
-from SDworld import SDworld
-from SDworld_hard import SDworld_hard
-
 
 class Environment:
     def __init__(self):
@@ -53,15 +48,12 @@ class Environment:
         self.reset()
 
     def _set_env(self):
-        if Config.GAME_CHOICE == Config.game_grid:
-            self.game = Gridworld(Config.ENV_ROW, Config.ENV_COL, Config.PIXEL_SIZE, Config.MAX_ITER, Config.DISPLAY_SCREEN, 
-                                  Config.TIMER_DURATION, Config.IMAGE_WIDTH, Config.IMAGE_HEIGHT, Config.STACKED_FRAMES)
-        elif Config.GAME_CHOICE == Config.game_sdworld:
-            self.game = SDworld(Config.ENV_ROW, Config.ENV_COL, Config.MAX_ITER, Config.STACKED_FRAMES, Config.PIXEL_SIZE)
-        elif Config.GAME_CHOICE == Config.game_sdworld_hard:
-            self.game = SDworld_hard(Config.ENV_ROW, Config.ENV_COL, Config.MAX_ITER, Config.STACKED_FRAMES, Config.PIXEL_SIZE)
-        elif Config.GAME_CHOICE == Config.game_ale:
-            self.game = GameManager(Config.ATARI_GAME, display=Config.PLAY_MODE)
+        if Config.GAME_CHOICE == Config.game_doorpuzzle:
+            from Doorpuzzle import Doorpuzzle
+            self.game = Doorpuzzle()
+        elif Config.GAME_CHOICE == Config.game_minecraft:
+            from Minecraft import Minecraft
+            self.game = Minecraft()
         else: 
             raise ValueError("[ ERROR ] Invalid choice of game. Check Config.py for choices")
 
@@ -70,7 +62,6 @@ class Environment:
             if not self.frame_q.full() or not self.audio_q.full():
                 return [None, None]
 
-            # TODO concatenate audio into 1 long image instead
             audio_ = np.array(self.audio_q.queue)
             audio_ = np.transpose(audio_, [1, 2, 0])
 
@@ -134,48 +125,50 @@ class Environment:
         return reward, done
 
     def visualize_env(self, prediction, attention_i, attention_a, episode_num, iter_count, play_mode):
-        # Save
-        base_filename = Config.LOGDIR + '/' + 'episode_num_'+str(episode_num) + '/'
-        if play_mode:
-            base_filename = Config.LOGDIR + '/' + 'play_episode_num_'+str(episode_num) + '/'
+        # TODO This function will be cleaned up
+        dummy = 1
+        # # Save
+        # base_filename = Config.LOGDIR + '/' + 'episode_num_'+str(episode_num) + '/'
+        # if play_mode:
+        #     base_filename = Config.LOGDIR + '/' + 'play_episode_num_'+str(episode_num) + '/'
 
-        if not os.path.exists(base_filename):
-            os.makedirs(base_filename)
+        # if not os.path.exists(base_filename):
+        #     os.makedirs(base_filename)
 
-        image_filename       = base_filename + 'image_' + str(iter_count).zfill(2) + '.png'
-        audio_filename       = base_filename + 'audio_' + str(iter_count).zfill(2) + '.png'
-        attention_i_filename = base_filename + 'attention_i_' + str(iter_count).zfill(2) + '.npy'
-        attention_a_filename = base_filename + 'attention_a_' + str(iter_count).zfill(2) + '.npy'
-        prediction_filename  = base_filename + 'prediction_' + str(iter_count).zfill(2) + '.npy'
+        # image_filename       = base_filename + 'image_' + str(iter_count).zfill(2) + '.png'
+        # audio_filename       = base_filename + 'audio_' + str(iter_count).zfill(2) + '.png'
+        # attention_i_filename = base_filename + 'attention_i_' + str(iter_count).zfill(2) + '.npy'
+        # attention_a_filename = base_filename + 'attention_a_' + str(iter_count).zfill(2) + '.npy'
+        # prediction_filename  = base_filename + 'prediction_' + str(iter_count).zfill(2) + '.npy'
 
-        image, audio = self.game._get_image_and_audio(pid = 0, count = 0)
-        #  cv2.imwrite(image_filename, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
-        #  cv2.imwrite(audio_filename, audio*255)
-        #  np.save(attention_i_filename, np.asarray(attention_i))
-        #  np.save(attention_a_filename, np.asarray(attention_a))
-        #  np.save(prediction_filename, np.asarray(prediction))
-        
-        # Display
-        fig = plt.figure(0)
-        #  fig.show()
-        ax = plt.subplot2grid((2,2), (0,0))
-        ax.set_anchor('W')
-        plt.title("Image")
-        plt.imshow(image, cmap = 'gray')
-        ax = plt.subplot2grid((2,2), (0,1))
-        ax.set_anchor('E')
-        plt.title("Audio")
-        plt.imshow(audio, cmap='gray')
+        # image, audio = self.game._get_image_and_audio()
+        # #  cv2.imwrite(image_filename, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+        # #  cv2.imwrite(audio_filename, audio*255)
+        # #  np.save(attention_i_filename, np.asarray(attention_i))
+        # #  np.save(attention_a_filename, np.asarray(attention_a))
+        # #  np.save(prediction_filename, np.asarray(prediction))
+        # 
+        # # Display
+        # fig = plt.figure(0)
+        # #  fig.show()
+        # ax = plt.subplot2grid((2,2), (0,0))
+        # ax.set_anchor('W')
+        # plt.title("Image")
+        # plt.imshow(image, cmap = 'gray')
+        # ax = plt.subplot2grid((2,2), (0,1))
+        # ax.set_anchor('E')
+        # plt.title("Audio")
+        # plt.imshow(audio, cmap='gray')
 
-        #  if attention_i is not None:
-            #  with sns.axes_style("whitegrid"):
-                #  plt.subplot2grid((2,2), (1,0), colspan=2)
-                #  plt.title("Attention")
-                #  plt.plot(np.asarray(attention_a), np.arange(len(attention_a)), label='Attention-audio')
-                #  plt.legend(loc='upper center', ncol=2, fancybox=True, shadow=True)
-                #  plt.xlabel("Probability")
-                #  plt.ylabel("Step #")
-                #  ax = plt.gca()
-                #  ax.set_xlim(-0.2, 1.2)
-        #  plt.pause(0.00001)
-        #  time.sleep(Config.TIMER_DURATION)
+        # #  if attention_i is not None:
+        #     #  with sns.axes_style("whitegrid"):
+        #         #  plt.subplot2grid((2,2), (1,0), colspan=2)
+        #         #  plt.title("Attention")
+        #         #  plt.plot(np.asarray(attention_a), np.arange(len(attention_a)), label='Attention-audio')
+        #         #  plt.legend(loc='upper center', ncol=2, fancybox=True, shadow=True)
+        #         #  plt.xlabel("Probability")
+        #         #  plt.ylabel("Step #")
+        #         #  ax = plt.gca()
+        #         #  ax.set_xlim(-0.2, 1.2)
+        # #  plt.pause(0.00001)
+        # #  time.sleep(Config.TIMER_DURATION)

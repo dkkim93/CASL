@@ -33,14 +33,13 @@ from scipy.io.wavfile import read, write
 from scipy.misc import imresize
 import matplotlib.pyplot as plt
 
-
 class GameManager:
     def __init__(self, game_name, display):
         self.game_name                        = game_name
         self.display                          = display
         self.ale                              = ALEInterface()
         self.ale.setInt("random_seed", np.random.randint(low=0, high=999, size=1)[0])# when confident in results
-        self.ale.setInt("frame_skip", 4)# NOTE Do not change
+        self.ale.setInt("frame_skip", 4)
         self.ale.setBool("display_screen", True)
         self.ale.setBool("sound", Config.USE_AUDIO)
         self.ale.loadROM('../../environment/Arcade-Learning-Environment-Audio/game/' + game_name + '.bin')
@@ -146,10 +145,6 @@ class GameManager:
             return self._get_image()# Send initial obs to player 
 
     def step(self, action, pid, count):
-        # # If no display, sound goes too fast.
-        # if Config.DISPLAY_SCREEN == False and Config.USE_AUDIO: 
-        #     time.sleep(0.02)# Unit in sec # TODO did extra sleep need to be added here?
-
         # Action 
         action = self.legal_actions[action]
 

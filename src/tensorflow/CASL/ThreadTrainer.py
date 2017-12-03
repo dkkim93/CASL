@@ -28,7 +28,6 @@ import numpy as np
 from threading import Thread
 from Config import Config
 
-
 class ThreadTrainer(Thread):
     def __init__(self, server, id):
         super(ThreadTrainer, self).__init__()
@@ -41,9 +40,9 @@ class ThreadTrainer(Thread):
     def _dynamic_pad(image_,audio_,r_,a_, lstm_prev_h_):
         t = image_.shape[0]
         if t != Config.TIME_MAX:
-            imaget       = np.zeros((Config.TIME_MAX, Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH, Config.STACKED_FRAMES),dtype=np.float32)
-            audiot       = np.zeros((Config.TIME_MAX, Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH, Config.STACKED_FRAMES),dtype=np.float32) # TODO RNN audio frame stacking should be implemented correctly! should concat!!
-            rt           = np.zeros((Config.TIME_MAX),dtype=np.float32)
+            imaget       = np.zeros((Config.TIME_MAX, Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH, Config.STACKED_FRAMES), dtype=np.float32)
+            audiot       = np.zeros((Config.TIME_MAX, Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH, Config.STACKED_FRAMES), dtype=np.float32) 
+            rt           = np.zeros((Config.TIME_MAX), dtype=np.float32)
             at           = np.zeros((Config.TIME_MAX, a_.shape[1]),dtype=np.float32)
             lstm_prev_ht = np.zeros((Config.TIME_MAX, Config.NCELLS), dtype=np.float32)
 

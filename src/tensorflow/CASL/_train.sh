@@ -5,7 +5,6 @@ function print_header(){
     printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
 }
 
-
 # Check for libtcmalloc_minimal.so.4 
 if [[ ! -f /usr/lib/libtcmalloc_minimal.so.4 ]] 
 then
@@ -21,19 +20,14 @@ fi
 # Directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" 
 
-# Gridworld-Audio python module                                                                              
-print_header "Installing Gridworld-Audio python module"
-cd $DIR/../../environment/Gridworld-Audio
+# Doorpuzzle python module                                                                              
+print_header "Installing Doorpuzzle python module"
+cd $DIR/../../environment/Doorpuzzle
 sudo pip install -I .
 
-# SDworld python module                                                                              
-print_header "Installing SDworld python module"
-cd $DIR/../../environment/SDworld
-sudo pip install -I .
-
-# SDworld-hard python module                                                                              
-print_header "Installing SDworld_hard python module"
-cd $DIR/../../environment/SDworld_hard
+# Minecraft python module                                                                              
+print_header "Installing Minecraft python module"
+cd $DIR/../../environment/Minecraft
 sudo pip install -I .
 
 # Train tf 

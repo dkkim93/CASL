@@ -44,7 +44,7 @@ class NetworkVPCore(object):
             raise ValueError('User specific Config.USE_ATTENTION: ' + str(Config.USE_ATTENTION) + ', but selected Config.NET_ARCH: ' + str(Config.NET_ARCH))
 
     def _create_graph_inputs(self):
-        self.episode       = tf.Variable(0, dtype=tf.int32, name = 'episode')
+        self.episode       = tf.Variable(0, dtype=tf.int32, name='episode')
         self.x             = tf.placeholder(tf.float32, [None, self.img_height, self.img_width, self.img_channels], name='X')
         self.action_index  = tf.placeholder(tf.float32, [None, self.num_actions])
         self.layer_tracker = []
@@ -56,7 +56,7 @@ class NetworkVPCore(object):
             self.seq_lengths = tf.placeholder(tf.int32, [None], name='seq_lengths')
             self.mask        = tf.placeholder(tf.float32, [None], name='mask')
 
-            # All LSTM inputs/outputs. All are stored/restored properly as a unified list, so can have any crazy LSTM architectures desired.
+            # All LSTM inputs/outputs. All are stored/restored properly as a unified list, so can have any complex LSTM architectures desired.
             self.rnn_state_in  = []  
             self.rnn_state_out = []
             self.n_lstm_layers_total = 0
@@ -68,19 +68,18 @@ class NetworkVPCore(object):
 
     def _create_graph_outputs(self):
         # Cost: v 
-        self.logits_v = tf.squeeze(tf.layers.dense(inputs=self.final_flat, units=1, use_bias = True, activation=None, name = 'logits_v'), axis=[1])
+        self.logits_v = tf.squeeze(tf.layers.dense(inputs=self.final_flat, units=1, use_bias=True, activation=None, name='logits_v'), axis=[1])
         self.y_r = tf.placeholder(tf.float32, [None], name='Yr')
-        self.cost_v = 0.5 * tf.reduce_sum(tf.square(self.y_r - self.logits_v)*self.mask, axis=0)/tf.reduce_sum(self.mask)
+        self.cost_v = 0.5*tf.reduce_sum(tf.square(self.y_r - self.logits_v)*self.mask, axis=0)/tf.reduce_sum(self.mask)
 
         # Cost: p 
-        self.logits_p = tf.layers.dense(inputs = self.final_flat, units = self.num_actions, name = 'logits_p', activation = None)
-        self.softmax_p = tf.nn.softmax(self.logits_p) # TODO removed this stuff, if it hurts performance let's add it back: (tf.nn.softmax(self.logits_p) + Config.MIN_POLICY) / (1.0 + Config.MIN_POLICY * self.num_actions)
-        self.selected_action_prob = tf.reduce_sum(self.softmax_p * self.action_index, axis=1, name='selection_action_prob')
+        self.logits_p = tf.layers.dense(inputs=self.final_flat, units=self.num_actions, name='logits_p', activation=None)
+        self.softmax_p = tf.nn.softmax(self.logits_p) 
+        self.selected_action_prob = tf.reduce_sum(self.softmax_p*self.action_index, axis=1, name='selection_action_prob')
 
-        self.cost_p_advant= tf.log(tf.maximum(self.selected_action_prob, self.log_epsilon)) * (self.y_r - tf.stop_gradient(self.logits_v))  # Stop_gradient ensures the value gradient feedback doesn't contribute to policy learning
+        self.cost_p_advant= tf.log(tf.maximum(self.selected_action_prob, self.log_epsilon)) * (self.y_r - tf.stop_gradient(self.logits_v)) # Stop_gradient ensures the value gradient feedback doesn't contribute to policy learning
         self.var_beta = tf.placeholder(tf.float32, name='beta', shape=[])
-        self.cost_p_entrop = -1. * self.var_beta *  tf.reduce_sum(tf.log(tf.maximum(self.softmax_p, self.log_epsilon)) * self.softmax_p, axis=1)
-        #  self.cost_p_entrop = -1. * self.var_beta *  tf.reduce_sum(tf.log(self.softmax_p)* self.softmax_p, axis=1) # TODO Removed all the garbage entropy terms, add back if hurts performance
+        self.cost_p_entrop = -1.*self.var_beta*tf.reduce_sum(tf.log(tf.maximum(self.softmax_p, self.log_epsilon))*self.softmax_p, axis=1)
 
         self.cost_p_advant_agg = tf.reduce_sum(self.cost_p_advant*self.mask, axis=0, name='cost_p_advant_agg')/tf.reduce_sum(self.mask)
         self.cost_p_entrop_agg = tf.reduce_sum(self.cost_p_entrop*self.mask, axis=0, name='cost_p_entrop_agg')/tf.reduce_sum(self.mask)
@@ -88,8 +87,8 @@ class NetworkVPCore(object):
 
         # Cost: attention
         if Config.USE_ATTENTION:
-            self.cost_attention = -1. * Config.BETA_ATTENTION * tf.reduce_sum(tf.log(tf.maximum(self.softmax_attention, self.log_epsilon)) * self.softmax_attention, axis=1)
-            self.cost_attention_agg = - tf.reduce_sum(self.cost_attention*self.mask, axis=0, name='cost_attention_agg')/tf.reduce_sum(self.mask) # Negative since want to maximize entropy 
+            self.cost_attention = -1.*Config.BETA_ATTENTION*tf.reduce_sum(tf.log(tf.maximum(self.softmax_attention, self.log_epsilon)) * self.softmax_attention, axis=1)
+            self.cost_attention_agg = -tf.reduce_sum(self.cost_attention*self.mask, axis=0, name='cost_attention_agg')/tf.reduce_sum(self.mask) # Negative since want to maximize entropy 
         
             self.cost_all = self.cost_p + self.cost_v + self.cost_attention_agg
         else:
@@ -98,14 +97,14 @@ class NetworkVPCore(object):
         # Optimizer
         self.var_learning_rate = tf.placeholder(tf.float32, name='lr', shape=[])
         if Config.OPTIMIZER == Config.OPT_RMSPROP:
-                self.opt = tf.train.RMSPropOptimizer(learning_rate=self.var_learning_rate,
-                                                                        decay=Config.RMSPROP_DECAY,
-                                                                        momentum=Config.RMSPROP_MOMENTUM,
-                                                                        epsilon=Config.RMSPROP_EPSILON)
+            self.opt = tf.train.RMSPropOptimizer(learning_rate=self.var_learning_rate,
+                                                 decay=Config.RMSPROP_DECAY,
+                                                 momentum=Config.RMSPROP_MOMENTUM,
+                                                 epsilon=Config.RMSPROP_EPSILON)
         elif Config.OPTIMIZER == Config.OPT_ADAM:
-                self.opt = tf.train.AdamOptimizer(learning_rate=self.var_learning_rate)
+            self.opt = tf.train.AdamOptimizer(learning_rate=self.var_learning_rate)
         else:
-                raise ValueError('Invalid optimizer chosen! Check Config.py!')
+            raise ValueError('Invalid optimizer chosen! Check Config.py!')
 
         # Grad clipping
         self.global_step = tf.Variable(0, trainable=False, name='step')
@@ -113,15 +112,12 @@ class NetworkVPCore(object):
             self.opt_grad = self.opt.compute_gradients(self.cost_all)
             self.opt_grad_clipped = [(tf.clip_by_average_norm(g, Config.GRAD_CLIP_NORM),v) for g,v in self.opt_grad]
             self.train_op = self.opt.apply_gradients(self.opt_grad_clipped, global_step = self.global_step)
-        elif Config.USE_CUDNN:
-            self.opt_grad = self.opt.compute_gradients(self.cost_all)
-            #  self.opt_grad_clipped = [(g,v) for g,v in self.opt_grad]
-            self.train_op = self.opt.apply_gradients(self.opt_grad, global_step = self.global_step)
         else:
             self.train_op = self.opt.minimize(self.cost_all, global_step=self.global_step)
 
     def _create_tensorboard(self):
         summaries = tf.get_collection(tf.GraphKeys.SUMMARIES)
+
         summaries.append(tf.summary.scalar("Pcost_advantage", self.cost_p_advant_agg))
         summaries.append(tf.summary.scalar("Pcost_entropy", self.cost_p_entrop_agg))
         summaries.append(tf.summary.scalar("Pcost", self.cost_p))
@@ -141,9 +137,6 @@ class NetworkVPCore(object):
         summaries.append(tf.summary.histogram("activation_final_flat", self.final_flat))
         summaries.append(tf.summary.histogram("activation_v", self.logits_v))
         summaries.append(tf.summary.histogram("activation_p", self.softmax_p))
-
-        #  summaries.append(tf.summary.image("x_frame", self.x))
-        #  summaries.append(tf.summary.image("x_audio", self.input_audio))
 
         self.summary_op = tf.summary.merge(summaries)
         self.log_writer = tf.summary.FileWriter(os.path.join(Config.LOGDIR), self.sess.graph)
@@ -167,11 +160,10 @@ class NetworkVPCore(object):
 
             seq_lengths = np.array(seq_lengths)
             feed_dict.update({self.seq_lengths: seq_lengths, self.mask: mask})
-            # TODO UNDO!!!
             for i in range(self.n_lstm_layers_total):
                 cb = np.array(c[i]).reshape((-1, Config.NCELLS))
                 hb = np.array(h[i]).reshape((-1, Config.NCELLS))
-                cb = c[i] # TODO what's happening here?
+                cb = c[i]
                 hb = h[i]
                 feed_dict.update({self.rnn_state_in[i]: (cb, hb)})
 
@@ -219,7 +211,7 @@ class NetworkVPCore(object):
 
             # Populate RNN states
             for i in xrange(self.n_lstm_layers_total):
-                c = cs[:, i, :] if i == 1 else cs[:, i] # TODO why special case for i==1
+                c = cs[:, i, :] if i == 1 else cs[:, i]
                 h = hs[:, i, :] if i == 1 else hs[:, i]
                 feed_dict.update({self.rnn_state_in[i]: (c, h)})
 
@@ -289,7 +281,6 @@ class NetworkVPCore(object):
     def load(self):
         filename = tf.train.latest_checkpoint(os.path.dirname(self._checkpoint_filename()))
 
-        # TODO update per new checkpointing system
         if Config.LOAD_EPISODE > 0:
             filename = self._checkpoint_filename(Config.LOAD_EPISODE)
 
@@ -299,7 +290,6 @@ class NetworkVPCore(object):
             raise ValueError('Error importing checkpoint! Are you sure checkpoint %s exists?' %self._checkpoint_filename())
 
         return self.sess.run(self.episode)
-
 
     def get_variables_names(self):
         return [var.name for var in self.graph.get_collection('trainable_variables')]

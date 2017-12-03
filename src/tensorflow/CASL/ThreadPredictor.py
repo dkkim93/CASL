@@ -28,7 +28,6 @@ import numpy as np
 from Config import Config
 from threading import Thread
 
-
 class ThreadPredictor(Thread):
     def __init__(self, server, id):
         super(ThreadPredictor, self).__init__()
@@ -40,22 +39,17 @@ class ThreadPredictor(Thread):
     def run(self):
         ids = np.zeros(Config.PREDICTION_BATCH_SIZE, dtype=np.uint16)
         states_image = np.zeros((Config.PREDICTION_BATCH_SIZE, Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH, Config.STACKED_FRAMES), dtype=np.float32)
-
-        # This is correct. We now store Nones in prediction_q, so just read them all here without any if statements (some memory impact, but cleaner code)
-        #  if Config.USE_AUDIO:
         states_audio = np.zeros((Config.PREDICTION_BATCH_SIZE, Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH, Config.STACKED_FRAMES), dtype=np.float32)
 
         if Config.USE_RNN:
-            cs = np.zeros((Config.PREDICTION_BATCH_SIZE, self.server.model.n_lstm_layers_total, Config.NCELLS),
-                           dtype=np.float32) #if self.server.model.n_lstm_layers_total else [None] * Config.PREDICTION_BATCH_SIZE # TODO remove the commented part, pretty sure don't need
-            hs = np.zeros((Config.PREDICTION_BATCH_SIZE, self.server.model.n_lstm_layers_total, Config.NCELLS),
-                           dtype=np.float32) #if self.server.model.n_lstm_layers_total else [None] * Config.PREDICTION_BATCH_SIZE 
+            cs = np.zeros((Config.PREDICTION_BATCH_SIZE, self.server.model.n_lstm_layers_total, Config.NCELLS), dtype=np.float32) 
+            hs = np.zeros((Config.PREDICTION_BATCH_SIZE, self.server.model.n_lstm_layers_total, Config.NCELLS), dtype=np.float32)
         else:
             cs = [None] * Config.PREDICTION_BATCH_SIZE
             hs = [None] * Config.PREDICTION_BATCH_SIZE
 
         while not self.exit_flag:
-            ids[0], states_image[0], states_audio[0], cs[0], hs[0] = self.server.prediction_q.get()# Pops out the first element # TODO sos: why is this done?
+            ids[0], states_image[0], states_audio[0], cs[0], hs[0] = self.server.prediction_q.get()# Pops out the first element
             size = 1
             while size < Config.PREDICTION_BATCH_SIZE and not self.server.prediction_q.empty():
                 ids[size], states_image[size], states_audio[size], cs[size], hs[size] = self.server.prediction_q.get()
@@ -63,11 +57,11 @@ class ThreadPredictor(Thread):
 
             if Config.USE_RNN:
                 if Config.USE_ATTENTION:
-                    p, v, c, h, attention = self.server.model.predict_p_and_v(states_image[:size], states_audio[:size], cs[:size], hs[:size])# size will be "batch size"
+                    p, v, c, h, attention = self.server.model.predict_p_and_v(states_image[:size], states_audio[:size], cs[:size], hs[:size])# size is "batch size"
                 else:
-                    p, v, c, h = self.server.model.predict_p_and_v(states_image[:size], states_audio[:size], cs[:size], hs[:size])# size will be "batch size"
+                    p, v, c, h = self.server.model.predict_p_and_v(states_image[:size], states_audio[:size], cs[:size], hs[:size])
             else:
-                p, v = self.server.model.predict_p_and_v(states_image[:size], states_audio[:size], cs = None, hs = None)# size will be "batch size"
+                p, v = self.server.model.predict_p_and_v(states_image[:size], states_audio[:size], cs=None, hs=None)
 
             # Put p and v into wait_q accordingly
             for i in range(size):

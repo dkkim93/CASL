@@ -26,7 +26,6 @@
 
 # check python version; warn if not Python3
 import sys, warnings
-if sys.version_info < (3,0): warnings.warn("Optimized for Python3. Performance may suffer under Python2.", Warning)
 from Config import Config
 from Server import Server
 
@@ -42,7 +41,7 @@ if Config.PLAY_MODE:
 	Config.DISPLAY_SCREEN   = True
 	Config.AGENTS           = 1
 	Config.PREDICTORS       = 1
-	Config.TRAINERS         = 1 # TODO can we set this to 0? it runs, but didn't check if causes hidden problems 
+	Config.TRAINERS         = 1 
 	Config.DYNAMIC_SETTINGS = False
 	Config.LOAD_CHECKPOINT  = True
 	Config.TRAIN_MODELS     = False

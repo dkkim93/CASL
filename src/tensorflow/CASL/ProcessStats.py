@@ -24,14 +24,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys, time, os
-from shutil import copyfile
+import sys, time, os, threading
 import numpy as np
+from shutil import copyfile
 if sys.version_info >= (3,0): from queue import Queue as queueQueue
 else: from Queue import Queue as queueQueue
 from datetime import datetime
 from multiprocessing import Process, Queue, Value
-import threading
 from Config import Config
 
 class ProcessStats(Process):
@@ -52,6 +51,7 @@ class ProcessStats(Process):
     def _log_config_file(self):
         if not os.path.exists(Config.LOGDIR):
             os.makedirs(Config.LOGDIR)
+
         # Only backup the Config file if it does not exist (avoids cyclical updates of Config.py if loading checkpoints)
         if not os.path.isfile(os.path.join(Config.LOGDIR,'Config.py')):
             copyfile('Config.py',os.path.join(Config.LOGDIR,'Config.py')) 
@@ -70,12 +70,11 @@ class ProcessStats(Process):
 
     def run(self):
         with open(os.path.join(Config.LOGDIR, Config.RESULTS_FILENAME), 'a') as results_logger:
-            # Init parameters
             rolling_frame_count = 0
             rolling_reward      = 0
             results_q           = queueQueue(maxsize=Config.STAT_ROLLING_MEAN_WINDOW)
             self.start_time     = time.time()
-            first_time           = datetime.now()
+            first_time          = datetime.now()
 
             while True:
                 episode_time, reward, length = self.episode_log_q.get()

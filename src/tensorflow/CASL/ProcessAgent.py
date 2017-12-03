@@ -166,8 +166,8 @@ class ProcessAgent(Process):
         else:
             init_rnn_state = None
 
-        if self.model.n_lstm_layers_total != 1:
-            raise RuntimeError("TODO for n_lstm_layers_total > 1")
+        if self.model.n_lstm_layers_total > 1:
+            raise RuntimeError("Not implemented yet for n_lstm_layers_total > 1")
 
         while not done:
             # Initial step (used to ensure frame_q is full before trying to grab a current_state for prediction)
@@ -184,7 +184,7 @@ class ProcessAgent(Process):
             # Prediction
             if Config.USE_RNN:
                 if Config.USE_ATTENTION:
-                    lstm_prev_h = rnn_state[0]['h'] # TODO for n_lstm_layers_total > 1
+                    lstm_prev_h = rnn_state[0]['h']
                     prediction, value, rnn_state, attention = self.predict(self.env.current_state, rnn_state)
                 else:
                     lstm_prev_h = None
@@ -193,16 +193,16 @@ class ProcessAgent(Process):
                 prediction, value = self.predict(self.env.current_state, rnn_state = None)
 
             # Visualize train process or test process
-            #  if (self.id == 0 and self.is_vis_training) or Config.PLAY_MODE:
-                #  if Config.USE_ATTENTION:
-                    #  # Attention append
-                    #  self.vis_attention_i.append(attention[0])
-                    #  self.vis_attention_a.append(attention[1])
-                #  else:
-                    #  self.vis_attention_i = None
-                    #  self.vis_attention_a = None
+            if (self.id == 0 and self.is_vis_training) or Config.PLAY_MODE:
+                if Config.USE_ATTENTION:
+                    # Attention append
+                    self.vis_attention_i.append(attention[0])
+                    self.vis_attention_a.append(attention[1])
+                else:
+                    self.vis_attention_i = None
+                    self.vis_attention_a = None
 
-                #  self.env.visualize_env(prediction, self.vis_attention_i, self.vis_attention_a, self.current_episode_num, iter_count, Config.PLAY_MODE)
+              self.env.visualize_env(prediction, self.vis_attention_i, self.vis_attention_a, self.current_episode_num, iter_count)
 
             # Select action
             action = self.select_action(prediction)
@@ -225,7 +225,7 @@ class ProcessAgent(Process):
             # It is used to ensure, for games w long episodes, that data is sent back to the trainers sufficiently often
             # The shorter Config.TIME_MAX is, the more often the data queue is updated 
             if done or time_count == Config.TIME_MAX:
-                terminal_reward = 0 if done else value # TODO undo!! see A3C paper, Algorithm S2 (n-step q-learning) 
+                terminal_reward = 0 if done else value # A3C paper, Algorithm S2 (n-step q-learning) 
                 updated_exps, updated_leftover_exp = ProcessAgent._accumulate_rewards(experiences, self.discount_factor, terminal_reward, done)
                 x_, audio_, r_, a_, lstm_prev_h_ = self.convert_to_nparray(updated_exps) # NOTE if Config::USE_AUDIO == False, audio_ is None
                 yield x_, audio_, r_, a_, init_rnn_state, reward_sum_logger, lstm_prev_h_ # Sends back data and starts here next time fcn is called
@@ -235,7 +235,7 @@ class ProcessAgent(Process):
                 if updated_leftover_exp is not None:
                     #  terminal_reward = 0
                     x_, audio_, r_, a_, lstm_prev_h_ = self.convert_to_nparray(updated_leftover_exp) # NOTE if Config::USE_AUDIO == False, audio_ is None
-                    yield x_, audio_, r_, a_, init_rnn_state, reward_sum_logger, lstm_prev_h_ # TODO minor figure out what to send back in terms of rnn_state. Technically should be rnn_state[-1].
+                    yield x_, audio_, r_, a_, init_rnn_state, reward_sum_logger, lstm_prev_h_ 
 
                 # Reset the tmax count
                 time_count = 0
@@ -245,7 +245,6 @@ class ProcessAgent(Process):
 
                 if Config.USE_RNN:
                     init_rnn_state = rnn_state 
-
 
             time_count += 1
             iter_count += 1
@@ -280,8 +279,7 @@ class ProcessAgent(Process):
             self.episode_log_q.put((datetime.now(), total_reward_logger, total_length))
 
             # Close visualizing train process
-            #  if (self.id == 0 and self.is_vis_training) or Config.PLAY_MODE:
-                #  self.is_vis_training = False
-                #  self.last_vis_episode_num = self.current_episode_num
-                #  plt.close()
+            if (self.id == 0 and self.is_vis_training) or Config.PLAY_MODE:
+                self.is_vis_training = False
+                self.last_vis_episode_num = self.current_episode_num
 

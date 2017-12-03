@@ -35,24 +35,19 @@ from ThreadPredictor import ThreadPredictor
 from ThreadTrainer import ThreadTrainer
 from Gridworld_Audio import Actions # TODO clean up later
 
-
 class Server:
     def __init__(self):
         self.stats              = ProcessStats()
         self.tensorboard        = ProcessTensorboard()
         self.training_q         = Queue(maxsize=Config.MAX_QUEUE_SIZE)
         self.prediction_q       = Queue(maxsize=Config.MAX_QUEUE_SIZE)
-        # TODO clean logic later
-        if Config.GAME_CHOICE == Config.game_ale:
-            self.num_actions = Config.NUM_ACTIONS # TODO Environment().get_num_actions() disables sounds for processors
-        else:
-            gridworld_actions = Actions()
-            self.num_actions = gridworld_actions.num_actions
-
-        self.model = self.make_model()
+        if Config.GAME_CHOICE == Config.game_doorpuzzle:
+            from Doorpuzzle import Actions
+        elif Config.GAME_CHOICE == Config.game_minecraft:
+            from Minecraft import Actions
+        self.model              = self.make_model()
         if Config.LOAD_CHECKPOINT: 
             self.stats.episode_count.value = self.model.load()
-
         self.training_step      = 0
         self.frame_counter      = 0
         self.agents             = []
@@ -109,7 +104,6 @@ class Server:
         self.model.save(self.stats.episode_count.value)
 
     def main(self):
-        print '!!! Detected %d LSTM layers in total' % (self.model.n_lstm_layers_total)
         # Start Thread objects by calling start() methods
         if Config.TENSORBOARD:
             self.tensorboard.start()
@@ -122,8 +116,8 @@ class Server:
                 trainer.enabled = False
 
         # Algorithm parameters
-        learning_rate_multiplier = (Config.LEARNING_RATE_END - Config.LEARNING_RATE_START) / Config.ANNEALING_EPISODE_COUNT
-        beta_multiplier = (Config.BETA_END - Config.BETA_START) / Config.ANNEALING_EPISODE_COUNT
+        learning_rate_multiplier = (Config.LEARNING_RATE_END - Config.LEARNING_RATE_START)/Config.ANNEALING_EPISODE_COUNT
+        beta_multiplier = (Config.BETA_END - Config.BETA_START)/Config.ANNEALING_EPISODE_COUNT
 
         while self.stats.episode_count.value < Config.EPISODES:
             # Linearly anneals the learning rate up to Config.ANNEALING_EPISODE_COUNT, after which it maintains at Config.LEARNING_RATE_END

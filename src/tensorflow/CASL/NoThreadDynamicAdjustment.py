@@ -4,13 +4,13 @@
 # modification, are permitted provided that the following conditions
 # are met:
 #  * Redistributions of source code must retain the above copyright
-#	 notice, this list of conditions and the following disclaimer.
+#    notice, this list of conditions and the following disclaimer.
 #  * Redistributions in binary form must reproduce the above copyright
-#	 notice, this list of conditions and the following disclaimer in the
-#	 documentation and/or other materials provided with the distribution.
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
 #  * Neither the name of NVIDIA CORPORATION nor the names of its
-#	 contributors may be used to endorse or promote products derived
-#	 from this software without specific prior written permission.
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
 # EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -28,52 +28,51 @@ import time
 import numpy as np
 from Config import Config
 
-
 class ThreadDynamicAdjustment():
-	def __init__(self, server):
-		self.server = server
-		self.enabled = Config.DYNAMIC_SETTINGS
-		self.trainer_count = Config.TRAINERS
-		self.predictor_count = Config.PREDICTORS
-		self.agent_count = Config.AGENTS
+    def __init__(self, server):
+        self.server = server
+        self.enabled = Config.DYNAMIC_SETTINGS
+        self.trainer_count = Config.TRAINERS
+        self.predictor_count = Config.PREDICTORS
+        self.agent_count = Config.AGENTS
 
-	def enable_disable_components(self):
-		# Trainer
-		cur_len = len(self.server.trainers)
-		if cur_len < self.trainer_count:
-			for _ in np.arange(cur_len, self.trainer_count):
-				self.server.add_trainer()
-		elif cur_len > self.trainer_count:
-			for _ in np.arange(self.trainer_count, cur_len):
-				self.server.remove_trainer()
+    def enable_disable_components(self):
+        # Trainer
+        cur_len = len(self.server.trainers)
+        if cur_len < self.trainer_count:
+            for _ in np.arange(cur_len, self.trainer_count):
+                self.server.add_trainer()
+        elif cur_len > self.trainer_count:
+            for _ in np.arange(self.trainer_count, cur_len):
+                self.server.remove_trainer()
 
-		# Predictor
-		cur_len = len(self.server.predictors)
-		if cur_len < self.predictor_count:
-			for _ in np.arange(cur_len, self.predictor_count):
-				self.server.add_predictor()
-		elif cur_len > self.predictor_count:
-			for _ in np.arange(self.predictor_count, cur_len):
-				self.server.remove_predictor()
+        # Predictor
+        cur_len = len(self.server.predictors)
+        if cur_len < self.predictor_count:
+            for _ in np.arange(cur_len, self.predictor_count):
+                self.server.add_predictor()
+        elif cur_len > self.predictor_count:
+            for _ in np.arange(self.predictor_count, cur_len):
+                self.server.remove_predictor()
 
-		# Agent
-		cur_len = len(self.server.agents)
-		if cur_len < self.agent_count:
-			for _ in np.arange(cur_len, self.agent_count):
-				self.server.add_agent()
-		elif cur_len > self.agent_count:
-			for _ in np.arange(self.agent_count, cur_len):
-				self.server.remove_agent()
+        # Agent
+        cur_len = len(self.server.agents)
+        if cur_len < self.agent_count:
+            for _ in np.arange(cur_len, self.agent_count):
+                self.server.add_agent()
+        elif cur_len > self.agent_count:
+            for _ in np.arange(self.agent_count, cur_len):
+                self.server.remove_agent()
 
-	def update_stats(self):
-		self.server.stats.trainer_count.value = self.trainer_count
-		self.server.stats.predictor_count.value = self.predictor_count
-		self.server.stats.agent_count.value = self.agent_count
+    def update_stats(self):
+        self.server.stats.trainer_count.value   = self.trainer_count
+        self.server.stats.predictor_count.value = self.predictor_count
+        self.server.stats.agent_count.value     = self.agent_count
 
-	def run(self):
-		self.enable_disable_components()
-		self.update_stats()
+    def run(self):
+        self.enable_disable_components()
+        self.update_stats()
 
-		# If Config.DYNAMIC_SETTINGS == False, return
-		if not self.enabled:
-			return
+        # If Config.DYNAMIC_SETTINGS == False, return
+        if not self.enabled:
+            return

@@ -82,9 +82,6 @@ class Config:
         REWARD_MIN     = -1 # Reward Clipping
         REWARD_MAX     = 1
         AUDIO_MAX_DATA = 512 
-        AUDIO_FREQ     = 30720 # Audio frequency
-        WINLEN         = 0.010 # Window length for MFCC conversion
-        WINSTEP        = 0.003 # Window Step for MFCC conversion
 
     #########################################################################
     # NET ARCHITECTURE
@@ -96,9 +93,8 @@ class Config:
         NUM_LAYERS_PER_LSTM    = 1
         NCELLS                 = 128
         STACKED_FRAMES         = 1
-        USE_CUDNN              = False # Uses CudnnLSTM tensorflow implementation (usually best)
-        USE_LSTMBlockFusedCell = True  # Uses LSTMBlockFusedCell tensorflow implementation (usually second best)
-        USE_LSTMCell           = False # Uses LSTMCell tensorflow implementation (usually worst)
+        USE_LSTMBlockFusedCell = True  # Uses LSTMBlockFusedCell tensorflow implementation
+        USE_LSTMCell           = False # Uses LSTMCell tensorflow implementation
     else:
         STACKED_FRAMES         = 4
 

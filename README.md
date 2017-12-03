@@ -28,16 +28,7 @@ Three environments are supported:
 2. 2D Minecraft-like
 3. Arcade Learning Environment-Audio (ALE-Audio)
 
-For ALE-Audio, please build the environment:
-```
-cd src/environment/Arcade-Learning-Environment-Audio/
-mkdir build && cd build
-cmake -DUSE_SDL=ON -DUSE_RLGLUE=OFF -DBUILD_EXAMPLES=OFF ..
-make -j4
-
-cd ..
-sudo pip install .
-```
+For ALE-Audio, a pull request to ALE will be sent shortly.
 
 #### To Run:
 Please run the following script: src/tensorflow/CASL/_ctt.sh

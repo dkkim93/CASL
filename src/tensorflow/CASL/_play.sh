@@ -25,7 +25,7 @@ print_header "Installing Doorpuzzle python module"
 cd $DIR/../../environment/Doorpuzzle
 sudo pip install -I .
 
-# Mazeworld python module                                                                              
+# Minecraft python module                                                                              
 print_header "Installing Minecraft python module"
 cd $DIR/../../environment/Minecraft
 sudo pip install -I .

@@ -5,6 +5,18 @@ function print_header(){
     printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
 }
 
+# Check for libtcmalloc_minimal.so.4 
+if [[ ! -f /usr/lib/libtcmalloc_minimal.so.4 ]] 
+then
+    echo 'File "/usr/lib/libtcmalloc_minimal.so.4 does not exist, aborting. Make sure you ran dependencies_install.sh if using ALE code!'
+    exit
+else
+    if [[ $LD_PRELOAD != *"/usr/lib/libtcmalloc_minimal.so.4"* ]]; then
+        echo '$LD_PRELOAD does not contain "/usr/lib/libtcmalloc_minimal.so.4", aborting. Make sure you ran dependencies_install.sh if using ALE code!'
+        exit
+    fi
+fi
+
 # Directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" 
 

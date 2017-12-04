@@ -122,3 +122,30 @@ class Environment:
         self.current_state = self._get_current_state()
 
         return reward, done
+
+    def visualize_env(self, attention_i, attention_a):
+        image, audio = self.game._get_obs(show_gt = True)
+        
+        # Display
+        fig = plt.figure(0)
+        ax = plt.subplot2grid((2,2), (0,0))
+        ax.set_anchor('W')
+        plt.title("Image")
+        plt.imshow(image)
+        ax = plt.subplot2grid((2,2), (0,1))
+        ax.set_anchor('E')
+        plt.title("Audio")
+        plt.imshow(audio, cmap='gray')
+
+        if attention_i is not None:
+            with sns.axes_style("whitegrid"):
+                plt.subplot2grid((2,2), (1,0), colspan=2)
+                plt.title("Attention")
+                plt.plot(np.asarray(attention_a), np.arange(len(attention_a)), label='Attention-audio')
+                plt.legend(loc='upper center', ncol=2, fancybox=True, shadow=True)
+                plt.xlabel("Probability")
+                plt.ylabel("Step #")
+                ax = plt.gca()
+                ax.set_xlim(-0.2, 1.2)
+
+        plt.pause(Config.TIMER_DURATION)

@@ -100,7 +100,7 @@ class Config:
 
     if USE_RNN:
         NUM_LAYERS_PER_LSTM        = 1   # NOTE not fully implemented for more than 1 layer
-        NCELLS                     = 128
+        NCELLS                     = 32
         STACKED_FRAMES             = 1
         if ATTN_TYPE == attn_multimodal:
             NMODES                 = 2   # NOTE not fully implemented >2 case yet
@@ -111,7 +111,7 @@ class Config:
         STACKED_FRAMES             = 1
 
     if USE_OPTIONS:
-        NUM_OPTIONS                = 3
+        NUM_OPTIONS                = 2
         COST_DELIB_START           = 0.000  # For deliberation cost
         COST_DELIB_END             = 0.0002 # For deliberation cost
         COST_MARGIN                = 0.0002

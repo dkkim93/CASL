@@ -186,6 +186,13 @@ class ProcessAgent(Process):
             if Config.USE_RNN:
                 rnn_state = prediction_dict['rnn_state_out']
 
+            # Visualize train process or test process
+            if (self.id == 0 and self.is_vis_training) or Config.PLAY_MODE:
+                self.vis_attention_i.append(prediction_dict['attn'][0])
+                self.vis_attention_a.append(prediction_dict['attn'][1])
+            
+                self.env.visualize_env(self.vis_attention_i, self.vis_attention_a)
+
             # Select action
             i_action = self.select_action(prediction_dict)
 
@@ -258,6 +265,15 @@ class ProcessAgent(Process):
             total_reward_logger = 0
             total_length        = 0
 
+            # For visualizing train process
+            if self.id == 0:
+                self.current_episode_num = self.stats.episode_count.value
+                if ((self.current_episode_num - self.last_vis_episode_num > Config.VIS_FREQUENCY)) or Config.PLAY_MODE:
+                    self.is_vis_training = True
+                    if Config.USE_ATTENTION:
+                        self.vis_attention_i = []
+                        self.vis_attention_a = []
+
             for x_, audio_, r_, a_, o_, rnn_state_, reward_sum_logger in self.run_episode():
                 if len(x_.shape) <= 1:
                     raise RuntimeError("x_ has invalid shape")
@@ -267,3 +283,8 @@ class ProcessAgent(Process):
                     self.training_q.put((x_, audio_, r_, a_, o_, rnn_state_)) # NOTE audio_ and rnn_state_ might be None depending on Config.USE_AUDIO/USE_RNN
 
             self.episode_log_q.put((datetime.now(), total_reward_logger, total_length))
+
+            # Close visualizing train process
+            if (self.id == 0 and self.is_vis_training) or Config.PLAY_MODE:
+                self.is_vis_training = False
+                self.last_vis_episode_num = self.current_episode_num

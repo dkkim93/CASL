@@ -188,8 +188,12 @@ class ProcessAgent(Process):
 
             # Visualize train process or test process
             if (self.id == 0 and self.is_vis_training) or Config.PLAY_MODE:
-                self.vis_attention_i.append(prediction_dict['attn'][0])
-                self.vis_attention_a.append(prediction_dict['attn'][1])
+                if Config.USE_ATTENTION: 
+                    self.vis_attention_i.append(prediction_dict['attn'][0])
+                    self.vis_attention_a.append(prediction_dict['attn'][1])
+                else:
+                    self.vis_attention_i = None
+                    self.vis_attention_a = None
             
                 self.env.visualize_env(self.vis_attention_i, self.vis_attention_a)
 

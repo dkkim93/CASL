@@ -90,7 +90,6 @@ class Config:
 
     #########################################################################
     # NET ARCHITECTURE
-    # Possible NET_ARCH: 'Net_3C_A_K_XL_F', 'Net_3C_XL_A_F', 'Net_3C_F'
     NET_ARCH                       = 'Net_3C_A_K_XL_F' # Neural net architecture. Any from the 'models' folder can be selected.
     USE_OPTIONS                    = True              # If True, learn option policy. If False, learn (primitive) action policies
     USE_RNN                        = True              # Enable to tse LSTM in neural net architecture

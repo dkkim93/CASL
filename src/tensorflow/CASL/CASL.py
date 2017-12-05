@@ -51,7 +51,6 @@ if __name__ == '__main__':
 
     # Adjust configs for Play mode
     if Config.PLAY_MODE:
-        Config.DISPLAY_SCREEN   = True
         Config.AGENTS           = 1
         Config.PREDICTORS       = 1
         Config.TRAINERS         = 0 

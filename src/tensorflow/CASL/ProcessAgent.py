@@ -50,12 +50,12 @@ class ProcessAgent(Process):
         self.stats                  = stats
         self.last_vis_episode_num   = 0
         self.is_vis_training        = False # Initialize to False
+        self.is_option_tracker_on   = False
 
-        if Config.PLAY_MODE and Config.LOAD_CHECKPOINT and Config.USE_OPTIONS:
-            self.is_option_tracker_on = True
-            self.option_tracker = OptionTracker()
-        else:
-            self.is_option_tracker_on = False
+        # NOTE: Disable for now
+        # if Config.PLAY_MODE and Config.LOAD_CHECKPOINT and Config.USE_OPTIONS:
+        #     self.is_option_tracker_on = True
+        #     self.option_tracker = OptionTracker()
 
     @staticmethod
     def _accumulate_rewards(experiences, discount_factor, terminal_reward, game_done):

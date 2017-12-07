@@ -31,7 +31,7 @@ Three environments are supported:
 For ALE-Audio, a pull request to ALE will be sent shortly.
 
 #### To Run:
-Please run the following script: src/tensorflow/CASL/_ctt.sh
+Please refer to instruction in `src/tensorflow/CASL/README.md`.
 
 #### Primary code maintainers:
 Shayegan Omidshafiei (https://github.com/shayegano)

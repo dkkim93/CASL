@@ -30,10 +30,10 @@ class Config:
     #########################################################################
     # GENERAL PARAMETERS
     CODE_DIR            = os.path.dirname(__file__)
-    game_doorpuzzle, 
-    game_minecraft,
+    game_doorpuzzle, \
+    game_minecraft, \
     game_ale            = range(3)  # Initialize game types as enum
-    GAME_CHOICE         = game_ale
+    GAME_CHOICE         = game_minecraft
     USE_AUDIO           = True      # Enable audio input
     TRAIN_MODELS        = False     # Enable to train
     PLAY_MODE           = True      # Enable to see the trained agent in action (for testing)

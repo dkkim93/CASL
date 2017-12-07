@@ -124,51 +124,29 @@ class Environment:
 
         return reward, done
 
-    def visualize_env(self, prediction, attention_i, attention_a, episode_num, iter_count, play_mode):
-        # TODO This function will be cleaned up
-        dummy = 1
-        # # Save
-        # base_filename = Config.LOGDIR + '/' + 'episode_num_'+str(episode_num) + '/'
-        # if play_mode:
-        #     base_filename = Config.LOGDIR + '/' + 'play_episode_num_'+str(episode_num) + '/'
+    def visualize_env(self, attention_i, attention_a):
+        image, audio = self.game._get_image_and_audio(show_gt = True)
+        
+        # Display
+        fig = plt.figure(0)
+        ax = plt.subplot2grid((2,2), (0,0))
+        ax.set_anchor('W')
+        plt.title("Image")
+        plt.imshow(image, cmap = 'gray')
+        ax = plt.subplot2grid((2,2), (0,1))
+        ax.set_anchor('E')
+        plt.title("Audio")
+        plt.imshow(audio, cmap='gray')
 
-        # if not os.path.exists(base_filename):
-        #     os.makedirs(base_filename)
+        if attention_i is not None:
+            with sns.axes_style("whitegrid"):
+                plt.subplot2grid((2,2), (1,0), colspan=2)
+                plt.title("Attention")
+                plt.plot(np.asarray(attention_a), np.arange(len(attention_a)), label='Attention-audio')
+                plt.legend(loc='upper center', ncol=2, fancybox=True, shadow=True)
+                plt.xlabel("Probability")
+                plt.ylabel("Step #")
+                ax = plt.gca()
+                ax.set_xlim(-0.2, 1.2)
 
-        # image_filename       = base_filename + 'image_' + str(iter_count).zfill(2) + '.png'
-        # audio_filename       = base_filename + 'audio_' + str(iter_count).zfill(2) + '.png'
-        # attention_i_filename = base_filename + 'attention_i_' + str(iter_count).zfill(2) + '.npy'
-        # attention_a_filename = base_filename + 'attention_a_' + str(iter_count).zfill(2) + '.npy'
-        # prediction_filename  = base_filename + 'prediction_' + str(iter_count).zfill(2) + '.npy'
-
-        # image, audio = self.game._get_image_and_audio()
-        # #  cv2.imwrite(image_filename, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
-        # #  cv2.imwrite(audio_filename, audio*255)
-        # #  np.save(attention_i_filename, np.asarray(attention_i))
-        # #  np.save(attention_a_filename, np.asarray(attention_a))
-        # #  np.save(prediction_filename, np.asarray(prediction))
-        # 
-        # # Display
-        # fig = plt.figure(0)
-        # #  fig.show()
-        # ax = plt.subplot2grid((2,2), (0,0))
-        # ax.set_anchor('W')
-        # plt.title("Image")
-        # plt.imshow(image, cmap = 'gray')
-        # ax = plt.subplot2grid((2,2), (0,1))
-        # ax.set_anchor('E')
-        # plt.title("Audio")
-        # plt.imshow(audio, cmap='gray')
-
-        # #  if attention_i is not None:
-        #     #  with sns.axes_style("whitegrid"):
-        #         #  plt.subplot2grid((2,2), (1,0), colspan=2)
-        #         #  plt.title("Attention")
-        #         #  plt.plot(np.asarray(attention_a), np.arange(len(attention_a)), label='Attention-audio')
-        #         #  plt.legend(loc='upper center', ncol=2, fancybox=True, shadow=True)
-        #         #  plt.xlabel("Probability")
-        #         #  plt.ylabel("Step #")
-        #         #  ax = plt.gca()
-        #         #  ax.set_xlim(-0.2, 1.2)
-        # #  plt.pause(0.00001)
-        # #  time.sleep(Config.TIMER_DURATION)
+        plt.pause(Config.TIMER_DURATION)

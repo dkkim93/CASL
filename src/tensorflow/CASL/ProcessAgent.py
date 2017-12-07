@@ -202,7 +202,7 @@ class ProcessAgent(Process):
                     self.vis_attention_i = None
                     self.vis_attention_a = None
 
-              self.env.visualize_env(prediction, self.vis_attention_i, self.vis_attention_a, self.current_episode_num, iter_count)
+                self.env.visualize_env(self.vis_attention_i, self.vis_attention_a)
 
             # Select action
             action = self.select_action(prediction)

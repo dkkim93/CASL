@@ -24,9 +24,6 @@ def transpose_batch_time(x):
     return x_t
 
 def lstm_layer(input, input_dim, out_dim, initial_state_input, seq_lengths, name, reuse=False):
-    if Config.USE_CUDNN + Config.USE_LSTMBlockFusedCell + Config.USE_LSTMCell > 1:
-        raise ValueError('Only one of LSTM layer flags must be set to true in Config.py! But Config.USE_CUDNN=%i, Config.USE_LSTMBlockFusedCell=%i, Config.USE_LSTMCell=%i' % ( Config.USE_CUDNN, Config.USE_LSTMBlockFusedCell, Config.USE_LSTMCell))
-
     with tf.variable_scope(name, reuse=reuse):
         batch_size = tf.shape(seq_lengths)[0]
         input_reshaped = tf.reshape(input, [batch_size, -1, input_dim])

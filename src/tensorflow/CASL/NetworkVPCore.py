@@ -226,12 +226,8 @@ class NetworkVPCore(object):
             c = np.zeros((batch_size, self.n_lstm_layers_total, Config.NCELLS), dtype=np.float32)
             h = np.zeros((batch_size, self.n_lstm_layers_total, Config.NCELLS), dtype=np.float32)
             for i in xrange(self.n_lstm_layers_total):
-                if Config.USE_CUDNN:
-                    c[:, i, :] = rnn_state_out[i][0]
-                    h[:, i, :] = rnn_state_out[i][1]
-                else:
-                    c[:, i, :] = rnn_state_out[i].c
-                    h[:, i, :] = rnn_state_out[i].h
+                c[:, i, :] = rnn_state_out[i].c
+                h[:, i, :] = rnn_state_out[i].h
 
             if Config.USE_ATTENTION:
                 return p, v, c, h, attention

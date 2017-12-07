@@ -35,11 +35,11 @@ class Config:
     game_ale            = range(3)  # Initialize game types as enum
     GAME_CHOICE         = game_minecraft
     USE_AUDIO           = True      # Enable audio input
-    TRAIN_MODELS        = False     # Enable to train
-    PLAY_MODE           = True      # Enable to see the trained agent in action (for testing)
+    TRAIN_MODELS        = True      # Enable to train
+    PLAY_MODE           = False     # Enable to see the trained agent in action (for testing)
     LOAD_EPISODE        = 0         # If 0, the latest checkpoint is loaded
-    LOAD_CHECKPOINT     = True      # Load old models. Throws if the model doesn't exist
-    VIS_TRAIN           = False     # Visualize train process
+    LOAD_CHECKPOINT     = False     # Load old models. Throws if the model doesn't exist
+    VIS_TRAIN           = True      # Visualize train process
     VIS_FREQUENCY       = 500       # Enable Vis during trainig every VIS_FREQUENCY
     if LOAD_CHECKPOINT:
         LOGDIR          = os.path.join('tmp-logs', '2017-10-30_20h-12m-47s')

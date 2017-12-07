@@ -45,6 +45,7 @@ class Server:
             from Doorpuzzle import Actions
         elif Config.GAME_CHOICE == Config.game_minecraft:
             from Minecraft import Actions
+        self.num_actions = Actions().num_actions
         self.model              = self.make_model()
         if Config.LOAD_CHECKPOINT: 
             self.stats.episode_count.value = self.model.load()

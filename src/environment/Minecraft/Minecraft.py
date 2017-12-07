@@ -188,9 +188,9 @@ class Minecraft():
     #########################################################################
     # AUDIO-RELATED
     def _init_mfcc(self):
-        self.mfcc_target_good = self._get_mfcc(os.path.join(sys.path[0], '../../environment/minecraft/assets/target_good.wav'))
-        self.mfcc_target_bad  = self._get_mfcc(os.path.join(sys.path[0], '../../environment/minecraft/assets/target_bad.wav'))
-        self.mfcc_no_listen   = self._get_mfcc(os.path.join(sys.path[0], '../../environment/minecraft/assets/noise.wav'))
+        self.mfcc_target_good = self._get_mfcc(os.path.join(sys.path[0], '../../environment/Minecraft/assets/target_good.wav'))
+        self.mfcc_target_bad  = self._get_mfcc(os.path.join(sys.path[0], '../../environment/Minecraft/assets/target_bad.wav'))
+        self.mfcc_no_listen   = self._get_mfcc(os.path.join(sys.path[0], '../../environment/Minecraft/assets/noise.wav'))
 
     def _get_mfcc(self, filename):
         (samplerate, audio) = wav.read(filename)
@@ -225,12 +225,12 @@ class Minecraft():
 
         # False: vis with characters, items, etc
         else:
-            self.img_agent      = self._read_img('../../environment/minecraft/TexturePacker/All/Characters/Player_Male/male.png', interp=cv2.INTER_NEAREST)
-            self.img_stone      = self._read_img('../../environment/minecraft/TexturePacker/All/Tiles/stone.png')
-            self.img_pick_gold  = self._read_img('../../environment/minecraft/TexturePacker/All/Items/pick_gold.png', interp=cv2.INTER_NEAREST)
-            self.img_pick_iron  = self._read_img('../../environment/minecraft/TexturePacker/All/Items/shovel_bronze.png', interp=cv2.INTER_NEAREST)
-            self.img_stone_gold = self._read_img('../../environment/minecraft/TexturePacker/All/Tiles/stone_gold.png')
-            self.img_stone_iron = self._read_img('../../environment/minecraft/TexturePacker/All/Tiles/stone_iron.png')
+            self.img_agent      = self._read_img('../../environment/Minecraft/TexturePacker/All/Characters/Player_Male/male.png', interp=cv2.INTER_NEAREST)
+            self.img_stone      = self._read_img('../../environment/Minecraft/TexturePacker/All/Tiles/stone.png')
+            self.img_pick_gold  = self._read_img('../../environment/Minecraft/TexturePacker/All/Items/pick_gold.png', interp=cv2.INTER_NEAREST)
+            self.img_pick_iron  = self._read_img('../../environment/Minecraft/TexturePacker/All/Items/shovel_bronze.png', interp=cv2.INTER_NEAREST)
+            self.img_stone_gold = self._read_img('../../environment/Minecraft/TexturePacker/All/Tiles/stone_gold.png')
+            self.img_stone_iron = self._read_img('../../environment/Minecraft/TexturePacker/All/Tiles/stone_iron.png')
 
             self.img_agent_in_stone = self._overlay_imgs(self.img_agent, self.img_stone)
             self.img_gold_in_stone  = self._overlay_imgs(self.img_pick_gold, self.img_stone)

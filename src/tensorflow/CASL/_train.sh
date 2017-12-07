@@ -33,4 +33,4 @@ sudo pip install -I .
 # Train tf 
 print_header "Training network"
 cd $DIR
-python GA3C.py "$@"
+python CASL.py "$@"

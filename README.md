@@ -1,4 +1,4 @@
-# CASL
+# Crossmodal Attentive Skill Learner (CASL)
 
 Hybrid CPU-GPU implementation of Crossmodal Attentive Skill Learner (CASL)  
 Codebase design is based on [GA3C](https://github.com/NVlabs/GA3C/).

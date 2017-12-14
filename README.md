@@ -28,7 +28,11 @@ Three environments are supported:
 2. 2D Minecraft-like
 3. Arcade Learning Environment-Audio (ALE-Audio)
 
-For ALE-Audio, a pull request to ALE will be sent shortly.
+We have added audio query support to ALE, and a pull request to the official ALE repo will be sent shortly so the community can benefit from this.
+
+Click image to see videos of ALE-Audio in action (left shows image, right shows audio spectrogram):
+
+[![Videos of ALE-Audio](https://img.youtube.com/vi/ld806cYAau0/0.jpg)](https://www.youtube.com/watch?v=ld806cYAau0&list=PLcLXhPlZoJmVSsYmfI2sHtDMMukBHja4L&index=1)
 
 #### To Run:
 Please refer to instruction in `src/tensorflow/CASL/README.md`.

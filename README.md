@@ -32,7 +32,7 @@ We have added audio query support to ALE, and a pull request to the official ALE
 
 Click image to see videos of ALE-Audio in action (left shows image, right shows audio spectrogram):
 
-[![Videos of ALE-Audio](https://img.youtube.com/vi/ld806cYAau0/0.jpg)](https://www.youtube.com/watch?v=ld806cYAau0&list=PLcLXhPlZoJmVSsYmfI2sHtDMMukBHja4L&index=1)
+[![Videos of ALE-Audio](https://github.com/shayegano/CASL/raw/master/misc/ale_audio_player.jpg)](https://www.youtube.com/watch?v=ld806cYAau0&list=PLcLXhPlZoJmVSsYmfI2sHtDMMukBHja4L&index=1)
 
 #### To Run:
 Please refer to instruction in `src/tensorflow/CASL/README.md`.

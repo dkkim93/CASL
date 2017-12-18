@@ -54,6 +54,9 @@ class Environment:
         elif Config.GAME_CHOICE == Config.game_minecraft:
             from Minecraft import Minecraft
             self.game = Minecraft()
+        elif Config.GAME_CHOICE == Config.game_ale:
+            from GameManager import GameManager
+            self.game = GameManager(Config.ATARI_GAME, display=Config.PLAY_MODE)
         else: 
             raise ValueError("[ ERROR ] Invalid choice of game. Check Config.py for choices")
 

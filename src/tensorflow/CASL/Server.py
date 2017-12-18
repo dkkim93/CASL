@@ -43,9 +43,12 @@ class Server:
         self.prediction_q       = Queue(maxsize=Config.MAX_QUEUE_SIZE)
         if Config.GAME_CHOICE == Config.game_doorpuzzle:
             from Doorpuzzle import Actions
+            self.num_actions = Actions().num_actions
         elif Config.GAME_CHOICE == Config.game_minecraft:
             from Minecraft import Actions
-        self.num_actions = Actions().num_actions
+            self.num_actions = Actions().num_actions
+        elif Config.GAME_CHOICE == Config.game_ale:
+            self.num_actions = Config.NUM_ACTIONS
         self.model              = self.make_model()
         if Config.LOAD_CHECKPOINT: 
             self.stats.episode_count.value = self.model.load()

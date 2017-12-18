@@ -41,12 +41,13 @@ class GameManager:
         self.game_name     = game_name
         self.display       = display
         self.ale           = ALEInterface()
-        self.ale.setInt("random_seed", np.random.randint(low=0, high=999, size=1)[0])# when confident in results
+        self.ale.setInt("random_seed", 123)
         self.ale.setInt("frame_skip", 4)
-        self.ale.setBool("display_screen", True)
+        self.ale.setBool("display_screen", False)
         self.ale.setBool("sound", Config.USE_AUDIO)
-        self.ale.loadROM('../../environment/Arcade-Learning-Environment-Audio/game/' + game_name + '.bin')
-        self.screen_width, 
+        self.ale.setBool("record_sound_for_user", Config.USE_AUDIO)
+        self.ale.loadROM('../../environment/Arcade-Learning-Environment/game/' + game_name + '.bin')
+        self.screen_width, \
         self.screen_height = self.ale.getScreenDims()
         self.legal_actions = self.ale.getMinimalActionSet()
         if Config.USE_AUDIO == True: 
@@ -70,43 +71,40 @@ class GameManager:
         return self._preprocess_image(image)
 
     def _audio_to_mfcc(self, audio):
-        """
-            Audio has 512 samples. Considering the audio frequency
-            is 30720, frame length of 320 samples (0.010 sec) and
-            frame step of 100 samples (0.003 sec) are chosen.
-        """
-        # Convert to mfcc
-        mfcc_data = mfcc(signal=audio, samplerate=30720, 
-                         winlen=0.010, winstep=0.003)
-        mfcc_data = np.swapaxes(mfcc_data, 0 ,1)
+        framerate = 60 # Should read from ALE settings technically
+        samples_per_frame = 512 # Should read from ALE SoundExporter class technically
+        mfcc_data = mfcc(signal=audio, samplerate=framerate*samples_per_frame, 
+                         winlen=0.002, winstep=0.0006)
+        mfcc_data = np.swapaxes(mfcc_data, 0 ,1) # Time on x-axis
         
         # Convert to grayscale image and resize
         mfcc_image = imresize(mfcc_data, (Config.IMAGE_WIDTH, Config.IMAGE_HEIGHT), interp='cubic') 
 
-        # Normalization
+        # Normalization between -1 and 1
         min_data = np.min(mfcc_image.flatten())
         max_data = np.max(mfcc_image.flatten())
         mfcc_image = 1.*(mfcc_image-min_data)/float(max_data-min_data)
         mfcc_image = mfcc_image*2 - 1
-        
+         
         return mfcc_image
 
     def _get_image_and_audio(self):
         np_data_image = np.zeros(self.screen_width*self.screen_height*3, dtype=np.uint8)
-        np_data_audio = np.zeros(Config.AUDIO_MAX_DATA, dtype=np.uint8)
-        self.ale.get_rgb_audio(np_data_image, np_data_audio)
+        np_data_audio = np.zeros(self.ale.getAudioSize(), dtype=np.uint8)
+        self.ale.getScreenRGBAndAudio(np_data_image, np_data_audio)
 
-        while np.count_nonzero(np_data_image) == 0:
+        while self.ale.getAudioSize() == 0:
             self.ale.act(0)
-            self.ale.get_rgb_audio(np_data_image, np_data_audio)
+            np_data_audio = np.zeros(self.ale.getAudioSize(), dtype=np.uint8)
+            self.ale.getScreenRGBAndAudio(np_data_image, np_data_audio)
 
-        if np.count_nonzero(np_data_image) == 0:
-            raise ValueError("Image data is 0 :(!")
+        # Image preprocess
         image = np.reshape(np_data_image, (self.screen_height, self.screen_width, 3)); 
         image = self._preprocess_image(image)
-            
-        mfcc = self._audio_to_mfcc(np_data_audio)# To mfcc
 
+        # Audio preprocess
+        mfcc = self._audio_to_mfcc(np_data_audio) # To mfcc
+    
         return image, mfcc
 
     def reset(self):
@@ -115,12 +113,12 @@ class GameManager:
         if Config.USE_AUDIO == True:
             self.last_valid_image = None
             self.last_valid_audio = None
-            return self._get_image_and_audio(None, None)# Send initial obs to player 
+            return self._get_image_and_audio()# Send initial obs to player 
 
         else:
             return self._get_image()# Send initial obs to player 
 
-    def step(self, action):
+    def step(self, action, pid=None, count=None):
         # Action 
         action = self.legal_actions[action]
 

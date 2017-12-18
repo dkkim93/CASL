@@ -33,7 +33,7 @@ class Config:
     game_doorpuzzle, \
     game_minecraft, \
     game_ale            = range(3)  # Initialize game types as enum
-    GAME_CHOICE         = game_minecraft
+    GAME_CHOICE         = game_ale
     USE_AUDIO           = True      # Enable audio input
     TRAIN_MODELS        = True      # Enable to train
     PLAY_MODE           = False     # Enable to see the trained agent in action (for testing)
@@ -77,8 +77,8 @@ class Config:
 
     # ALE GAME PARAMETER
     elif GAME_CHOICE == game_ale:
-        NUM_ACTIONS    = 10 # NOTE Depends on game (pong:6, seaquest: 18, amidar: 10)
         ATARI_GAME     = 'amidar'# Name of the game, with version (e.g. PongDeterministic-v0)
+        NUM_ACTIONS    = 10 # NOTE Depends on game (pong:6, seaquest: 18, amidar: 10)
         REWARD_MIN     = -1 # Reward Clipping
         REWARD_MAX     = 1
         AUDIO_MAX_DATA = 512 

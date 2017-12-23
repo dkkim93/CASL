@@ -88,7 +88,7 @@ class GameManager:
          
         return mfcc_image
 
-    def _get_image_and_audio(self):
+    def _get_image_and_audio(self, show_gt=False):
         np_data_image = np.zeros(self.screen_width*self.screen_height*3, dtype=np.uint8)
         np_data_audio = np.zeros(self.ale.getAudioSize(), dtype=np.uint8)
         self.ale.getScreenRGBAndAudio(np_data_image, np_data_audio)
@@ -100,7 +100,8 @@ class GameManager:
 
         # Image preprocess
         image = np.reshape(np_data_image, (self.screen_height, self.screen_width, 3)); 
-        image = self._preprocess_image(image)
+        if show_gt == False:
+            image = self._preprocess_image(image)
 
         # Audio preprocess
         mfcc = self._audio_to_mfcc(np_data_audio) # To mfcc

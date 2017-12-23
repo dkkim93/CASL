@@ -42,7 +42,7 @@ class Config:
     VIS_TRAIN           = True      # Visualize train process
     VIS_FREQUENCY       = 500       # Enable Vis during trainig every VIS_FREQUENCY
     if LOAD_CHECKPOINT:
-        LOGDIR          = os.path.join('tmp-logs', '2017-10-30_20h-12m-47s')
+        LOGDIR          = os.path.join('tmp-logs', '2017-12-18_13h-07m-08s')
     else:
         LOGDIR          = os.path.join('tmp-logs', datetime.now().strftime("%Y-%m-%d_%Hh-%Mm-%Ss"))
 
@@ -82,6 +82,7 @@ class Config:
         REWARD_MIN     = -1 # Reward Clipping
         REWARD_MAX     = 1
         AUDIO_MAX_DATA = 512 
+        TIMER_DURATION = 0.001 # In second visualization time for each step
 
     #########################################################################
     # NET ARCHITECTURE
@@ -101,7 +102,7 @@ class Config:
     #########################################################################
     # NUMBER OF AGENTS, PREDICTORS, TRAINERS, AND OTHER SYSTEM SETTINGS
     # IF THE DYNAMIC CONFIG IS ON, THESE ARE THE INITIAL VALUES
-    AGENTS                        = 32       # Number of Agents
+    AGENTS                        = 16       # Number of Agents
     PREDICTORS                    = 4        # Number of Predictors
     TRAINERS                      = 4        # Number of Trainers
     DEVICE                        = '/gpu:0' # Device

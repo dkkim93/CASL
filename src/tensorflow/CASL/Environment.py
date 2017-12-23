@@ -128,7 +128,7 @@ class Environment:
         return reward, done
 
     def visualize_env(self, attention_i, attention_a):
-        image, audio = self.game._get_image_and_audio(show_gt = True)
+        image, audio = self.game._get_image_and_audio(show_gt=True)
         
         # Display
         fig = plt.figure(0)

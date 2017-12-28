@@ -83,6 +83,7 @@ class Config:
         REWARD_MAX     = 1
         AUDIO_MAX_DATA = 512 
         TIMER_DURATION = 0.001 # In second visualization time for each step
+        DISPLAY_ALE    = False
 
     #########################################################################
     # NET ARCHITECTURE

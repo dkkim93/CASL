@@ -41,9 +41,9 @@ class GameManager:
         self.game_name     = game_name
         self.display       = display
         self.ale           = ALEInterface()
-        self.ale.setInt("random_seed", 123)
+        self.ale.setInt("random_seed", np.random.randint(low=0, high=999, size=1)[0])
         self.ale.setInt("frame_skip", 4)
-        self.ale.setBool("display_screen", False)
+        self.ale.setBool("display_screen", Config.DISPLAY_ALE)
         self.ale.setBool("sound", Config.USE_AUDIO)
         self.ale.setBool("record_sound_for_user", Config.USE_AUDIO)
         self.ale.loadROM('../../environment/Arcade-Learning-Environment/game/' + game_name + '.bin')

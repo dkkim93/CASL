@@ -192,7 +192,7 @@ class ProcessAgent(Process):
                 prediction, value = self.predict(self.env.current_state, rnn_state = None)
 
             # Visualize train process or test process
-            if (self.id == 0 and self.is_vis_training) or Config.PLAY_MODE:
+            if self.id == 0 and self.is_vis_training:
                 if Config.USE_ATTENTION:
                     # Attention append
                     self.vis_attention_i.append(attention[0])
@@ -262,7 +262,7 @@ class ProcessAgent(Process):
             # For visualizing train process
             if self.id == 0 and Config.VIS_TRAIN:
                 self.current_episode_num = self.stats.episode_count.value
-                if ((self.current_episode_num - self.last_vis_episode_num > Config.VIS_FREQUENCY)) or Config.PLAY_MODE:
+                if self.current_episode_num - self.last_vis_episode_num > Config.VIS_FREQUENCY:
                     self.is_vis_training = True
                     if Config.USE_ATTENTION:
                         self.vis_attention_i = []
@@ -278,7 +278,7 @@ class ProcessAgent(Process):
             self.episode_log_q.put((datetime.now(), total_reward_logger, total_length))
 
             # Close visualizing train process
-            if (self.id == 0 and self.is_vis_training) or Config.PLAY_MODE:
+            if self.id == 0 and self.is_vis_training:
                 self.is_vis_training = False
                 self.last_vis_episode_num = self.current_episode_num
 

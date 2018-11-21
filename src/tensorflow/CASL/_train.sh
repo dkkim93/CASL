@@ -23,14 +23,14 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Doorpuzzle python module                                                                              
 print_header "Installing Doorpuzzle python module"
 cd $DIR/../../environment/Doorpuzzle
-sudo pip install -I .
+sudo pip2.7 install -I .
 
 # Minecraft python module                                                                              
 print_header "Installing Minecraft python module"
 cd $DIR/../../environment/Minecraft
-sudo pip install -I .
+sudo pip2.7 install -I .
 
 # Train tf 
 print_header "Training network"
 cd $DIR
-python CASL.py "$@" 
+python2.7 CASL.py "$@" 

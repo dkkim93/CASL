@@ -60,7 +60,7 @@ class Doorpuzzle():
         assert self.simple_render is True
 
     def _init_rewards(self):
-        self.reward_step = 0.0
+        self.reward_step = -0.01
         self.reward_good = 1.0
 
     def _check_overlap(self, row, col):
@@ -162,8 +162,7 @@ class Doorpuzzle():
             raise ValueError("[ ERROR ] Wrong action!")
 
         i_action_sampled = np.random.choice(
-            3, p=[Config.NOISE_TRANS / 2.0, 1.0 - Config.NOISE_TRANS, Config.NOISE_TRANS / 2.])
-
+            3, p=[Config.NOISE_TRANS / 2., 1. - Config.NOISE_TRANS, Config.NOISE_TRANS / 2.])
         return actions_possib[i_action_sampled]
 
     def _is_obstacle_free(self, row, col):
@@ -207,7 +206,6 @@ class Doorpuzzle():
 
             if self._is_obstacle_free(self.agent_loc[0], new_loc):
                 self.agent_loc = np.array([self.agent_loc[0], new_loc])
-    
         else:
             raise ValueError("[ ERROR ] Wrong action!")
 
@@ -307,22 +305,19 @@ class Doorpuzzle():
             self.img_target2 = self._read_img('../../environment/Doorpuzzle/TexturePacker/All/Tiles/stone_iron.png')
 
             self.img_key1 = self._read_img(
-                '../../environment/Doorpuzzle/TexturePacker/All/Items/pick_gold.png', 
-                interp=cv2.INTER_NEAREST)
+                '../../environment/Doorpuzzle/TexturePacker/All/Items/pick_gold.png', interp=cv2.INTER_NEAREST)
             self.img_key1 = self._overlay_imgs(self.img_key1, self.img_background)
 
             self.img_key2 = self._read_img(
-                '../../environment/Doorpuzzle/TexturePacker/All/Items/shovel_bronze.png', 
-                interp=cv2.INTER_NEAREST)
+                '../../environment/Doorpuzzle/TexturePacker/All/Items/shovel_bronze.png', interp=cv2.INTER_NEAREST)
             self.img_key2 = self._overlay_imgs(self.img_key1, self.img_background)
 
             self.img_obstacle = self._read_img(
-                '../../environment/Doorpuzzle/TexturePacker/All/Tiles/fence_wood.png', 
-                interp=cv2.INTER_NEAREST)
+                '../../environment/Doorpuzzle/TexturePacker/All/Tiles/fence_wood.png', interp=cv2.INTER_NEAREST)
+            self.img_obstacle = self._overlay_imgs(self.img_obstacle, self.img_background)
 
             self.img_agent = self._read_img(
-                '../../environment/Doorpuzzle/TexturePacker/All/Characters/Player_Male/male.png', 
-                interp=cv2.INTER_NEAREST)
+                '../../environment/Doorpuzzle/TexturePacker/All/Characters/Player_Male/male.png', interp=cv2.INTER_NEAREST)
             self.img_agent = self._overlay_imgs(self.img_agent, self.img_background)
 
     def _read_img(self, img_path, interp=cv2.INTER_CUBIC):
@@ -395,7 +390,7 @@ class Doorpuzzle():
         gridworld_render = np.zeros((
             self.env_row * self.cell_px_size + 2 * self.lg_boundary_px_size,
             self.env_col * self.cell_px_size + 2 * self.lg_boundary_px_size, 
-            3), dtype=np.uint8) + 125
+            3), dtype=np.uint8) + 125.
 
         # Render boundary
         gridworld_render = self._render_boundary(gridworld_render, self.lg_boundary_px_size, 0)

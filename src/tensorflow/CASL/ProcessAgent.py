@@ -34,6 +34,8 @@ from Experience import Experience
 from OptionTracker import OptionTracker
 from models import CustomLayers
 
+vis_count = 0
+
 
 class ProcessAgent(Process):
     def __init__(self, model, id, prediction_q, training_q, episode_log_q, num_actions, stats):
@@ -51,11 +53,8 @@ class ProcessAgent(Process):
         self.stats = stats
         self.last_vis_episode_num = 0
         self.is_vis_training = False  # Initialize to False
-        self.is_option_tracker_on = False
+        self.is_option_tracker_on = True
         self.option_tracker = OptionTracker()
-
-        # if Config.PLAY_MODE and Config.LOAD_CHECKPOINT and Config.USE_OPTIONS:
-        #     self.is_option_tracker_on = True
 
     @staticmethod
     def _accumulate_rewards(experiences, discount_factor, terminal_reward, game_done):
@@ -164,6 +163,9 @@ class ProcessAgent(Process):
             rnn_state = None
             init_rnn_state = None
 
+        if self.id == 0 and self.is_option_tracker_on:
+            self.option_tracker._reset_tracker(vis_count)
+
         while not game_done:
             # Initial step (used to ensure frame_q is full before trying to grab a current_state for prediction)
             if Config.USE_AUDIO and (self.env.current_state[0] is None and self.env.current_state[1] is None):
@@ -172,6 +174,9 @@ class ProcessAgent(Process):
             elif self.env.current_state is None:
                 self.env.step(0)  # Action 0 corresponds to null action
                 continue
+
+            if self.is_option_tracker_on:
+                agt_loc = self.env.game.agent_loc
 
             # Option prediction
             if Config.USE_OPTIONS:
@@ -183,6 +188,8 @@ class ProcessAgent(Process):
                 i_option = None
                  
             # Primitive action prediction (for option and non-option cases)
+            if self.id == 0:
+                print("frame_count {}, i_option: {}".format(frame_count, i_option))
             prediction_dict = self.predict(self.env.current_state, rnn_state, i_option)
 
             # Update rnn_state
@@ -190,7 +197,7 @@ class ProcessAgent(Process):
                 rnn_state = prediction_dict['rnn_state_out']
 
             # Visualize train process or test process
-            if (self.id == 0 and self.is_vis_training) or Config.PLAY_MODE:
+            if self.id == 0:
                 if Config.USE_ATTENTION: 
                     self.vis_attention_i.append(prediction_dict['attn'][0])
                     self.vis_attention_a.append(prediction_dict['attn'][1])
@@ -198,7 +205,7 @@ class ProcessAgent(Process):
                     self.vis_attention_i = None
                     self.vis_attention_a = None
             
-                self.env.visualize_env(self.vis_attention_i, self.vis_attention_a)
+                self.env.visualize_env(self.vis_attention_i, self.vis_attention_a, vis_count)
 
             # Select action
             i_action = self.select_action(prediction_dict)
@@ -222,8 +229,7 @@ class ProcessAgent(Process):
             experiences.append(exp)
             
             # Plot option trajectories
-            if self.is_option_tracker_on:
-                raise ValueError("what is agt_loc?")
+            if self.id == 0 and self.is_option_tracker_on:
                 self.option_tracker._update_tracker(agt_loc, i_option, self.option_terminated)
                 self.option_tracker._plot_tracker()
 
@@ -264,6 +270,8 @@ class ProcessAgent(Process):
             frame_count += 1
 
     def run(self):
+        global vis_count
+
         np.random.seed(np.int32(time.time() % 1 * 5000 + self.id * 10))
         time.sleep(np.random.rand())  # Randomly sleep up to 1 second. Helps agents boot smoothly.
 
@@ -276,11 +284,11 @@ class ProcessAgent(Process):
             # For visualizing train process
             if self.id == 0:
                 self.current_episode_num = self.stats.episode_count.value
-                if ((self.current_episode_num - self.last_vis_episode_num > Config.VIS_FREQUENCY)) or Config.PLAY_MODE:
-                    self.is_vis_training = True
-                    if Config.USE_ATTENTION:
-                        self.vis_attention_i = []
-                        self.vis_attention_a = []
+                self.is_vis_training = True
+                if Config.USE_ATTENTION:
+                    self.vis_attention_i = []
+                    self.vis_attention_a = []
+                vis_count += 1
 
             for x_, audio_, r_, a_, o_, rnn_state_, reward_sum_logger in self.run_episode():
                 if len(x_.shape) <= 1:
@@ -295,5 +303,5 @@ class ProcessAgent(Process):
 
             # Close visualizing train process
             if (self.id == 0 and self.is_vis_training) or Config.PLAY_MODE:
-                self.is_vis_training = False
+                # self.is_vis_training = False
                 self.last_vis_episode_num = self.current_episode_num

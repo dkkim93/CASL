@@ -23,13 +23,16 @@
 # OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import sys, time, cv2, os
-if sys.version_info >= (3,0): from queue import Queue
-else: from Queue import Queue
+import sys
+if sys.version_info >= (3, 0):
+    from queue import Queue
+else:
+    from Queue import Queue
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from Config import Config
+
 
 class Environment:
     def __init__(self):
@@ -123,29 +126,41 @@ class Environment:
 
         return reward, done
 
-    def visualize_env(self, attention_i, attention_a):
-        image, audio = self.game._get_obs(show_gt = True)
-        
-        # Display
-        fig = plt.figure(0)
-        ax = plt.subplot2grid((2,2), (0,0))
-        ax.set_anchor('W')
-        plt.title("Image")
-        plt.imshow(image)
-        ax = plt.subplot2grid((2,2), (0,1))
-        ax.set_anchor('E')
-        plt.title("Audio")
-        plt.imshow(audio, cmap='gray')
-
+    def visualize_env(self, attention_i, attention_a, count):
         if attention_i is not None:
-            with sns.axes_style("whitegrid"):
-                plt.subplot2grid((2,2), (1,0), colspan=2)
-                plt.title("Attention")
-                plt.plot(np.asarray(attention_a), np.arange(len(attention_a)), label='Attention-audio')
-                plt.legend(loc='upper center', ncol=2, fancybox=True, shadow=True)
-                plt.xlabel("Probability")
-                plt.ylabel("Step #")
-                ax = plt.gca()
-                ax.set_xlim(-0.2, 1.2)
+            plt.figure(0)
+            plt.title("Attention")
+            plt.plot(np.asarray(attention_a), np.arange(len(attention_a)), label='Attention-audio')
+            plt.legend(loc='upper center', ncol=2, fancybox=True, shadow=True)
+            plt.xlabel("Probability")
+            plt.ylabel("Step #")
+            ax = plt.gca()
+            ax.set_xlim(-0.2, 1.2)
+        plt.savefig(str(count) + "_attention.png")
+        plt.close(0)
 
-        plt.pause(Config.TIMER_DURATION)
+        # image, audio = self.game._get_obs(show_gt=True)
+        # 
+        # # Display
+        # fig = plt.figure(0)
+        # ax = plt.subplot2grid((2,2), (0,0))
+        # ax.set_anchor('W')
+        # plt.title("Image")
+        # plt.imshow(image)
+        # ax = plt.subplot2grid((2,2), (0,1))
+        # ax.set_anchor('E')
+        # plt.title("Audio")
+        # plt.imshow(audio, cmap='gray')
+
+        # if attention_i is not None:
+        #     with sns.axes_style("whitegrid"):
+        #         plt.subplot2grid((2,2), (1,0), colspan=2)
+        #         plt.title("Attention")
+        #         plt.plot(np.asarray(attention_a), np.arange(len(attention_a)), label='Attention-audio')
+        #         plt.legend(loc='upper center', ncol=2, fancybox=True, shadow=True)
+        #         plt.xlabel("Probability")
+        #         plt.ylabel("Step #")
+        #         ax = plt.gca()
+        #         ax.set_xlim(-0.2, 1.2)
+
+        # plt.pause(Config.TIMER_DURATION)

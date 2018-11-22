@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from Config import Config
@@ -13,6 +14,7 @@ class OptionTracker():
         self.img_option_term_tracker = np.zeros((Config.ENV_COL, Config.ENV_ROW, Config.NUM_OPTIONS))
 
         self._init_axes()
+        self.history = []
 
     def _init_axes(self):
         self.fig = plt.figure("Option Tracker")
@@ -40,13 +42,20 @@ class OptionTracker():
             img_artist = self.axes[key].imshow(np.zeros((5, 5)), cmap="copper")
             self.artists[key] = img_artist
 
-    def _reset_tracker(self):
+    def _reset_tracker(self, count):
+        count -= 1
+        plt.savefig(str(count) + "_option.png")
+        with open(str(count) + "_history", "wb") as fp:
+            pickle.dump(self.history, fp)
+
         self.img_traj_tracker = np.zeros((Config.ENV_COL, Config.ENV_ROW, Config.NUM_OPTIONS))
         self.img_option_term_tracker = np.zeros((Config.ENV_COL, Config.ENV_ROW, Config.NUM_OPTIONS))
 
     def _update_tracker(self, agt_loc, i_option, option_term):
         self.img_traj_tracker[agt_loc[0], agt_loc[1], i_option] += 1
         self.img_option_term_tracker[agt_loc[0], agt_loc[1], i_option] += option_term 
+
+        self.history.append([agt_loc, i_option, option_term])
 
     def _plot_tracker(self):
         for i_option in range(Config.NUM_OPTIONS):
@@ -57,5 +66,3 @@ class OptionTracker():
             key = str(i_option) + '_1'
             self.artists[key].set_data(self.img_option_term_tracker[:, :, i_option])
             self.artists[key].autoscale()
-
-        plt.pause(Config.TIMER_DURATION)

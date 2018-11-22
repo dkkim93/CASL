@@ -101,8 +101,8 @@ class Config:
 
     if USE_OPTIONS:
         NUM_OPTIONS = 2
-        COST_DELIB_START = 0.000  # For deliberation cost
-        COST_DELIB_END = 0.0002  # For deliberation cost
+        COST_DELIB_START = 0.0005  # For deliberation cost
+        COST_DELIB_END = 0.0005  # For deliberation cost
         COST_MARGIN = 0.0002
         OPTION_EPSILON_START = 0.15   # For epsilon greedy in terms of options
         OPTION_EPSILON_END = 0.15   # For epsilon greedy in terms of options

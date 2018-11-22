@@ -60,7 +60,7 @@ class Doorpuzzle():
         assert self.simple_render is True
 
     def _init_rewards(self):
-        self.reward_step = 0.0
+        self.reward_step = -0.01
         self.reward_good = 1.0
 
     def _check_overlap(self, row, col):

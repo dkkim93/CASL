@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import pickle
 import numpy as np
 from Config import Config
 from datetime import datetime
@@ -274,6 +275,8 @@ class ProcessAgent(Process):
 
         np.random.seed(np.int32(time.time() % 1 * 5000 + self.id * 10))
         time.sleep(np.random.rand())  # Randomly sleep up to 1 second. Helps agents boot smoothly.
+        self.vis_attention_i = []
+        self.vis_attention_a = []
 
         self.env = Environment() 
 
@@ -286,6 +289,9 @@ class ProcessAgent(Process):
                 self.current_episode_num = self.stats.episode_count.value
                 self.is_vis_training = True
                 if Config.USE_ATTENTION:
+                    with open(str(vis_count) + "_attention", "wb") as fp:
+                        pickle.dump([self.vis_attention_i, self.vis_attention_a], fp)
+
                     self.vis_attention_i = []
                     self.vis_attention_a = []
                 vis_count += 1

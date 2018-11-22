@@ -24,11 +24,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import sys
+import numpy as np
 if sys.version_info >= (3, 0):
     from queue import Queue
 else:
     from Queue import Queue
-import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from Config import Config
@@ -37,9 +37,9 @@ from Config import Config
 class Environment:
     def __init__(self):
         self._set_env()
-        self.nb_frames    = Config.STACKED_FRAMES
-        self.frame_q      = Queue(maxsize=self.nb_frames)
-        self.audio_q      = Queue(maxsize=self.nb_frames)
+        self.nb_frames = Config.STACKED_FRAMES
+        self.frame_q = Queue(maxsize=self.nb_frames)
+        self.audio_q = Queue(maxsize=self.nb_frames)
         self.total_reward = 0
 
         if Config.USE_AUDIO:
@@ -71,7 +71,7 @@ class Environment:
             return None
 
         image_ = np.array(self.frame_q.queue)
-        image_ = np.transpose(image_, [1, 2, 0]) # e.g., changes image from (1,84,84) to (84,84,1) 
+        image_ = np.transpose(image_, [1, 2, 0])  # e.g., changes image from (1,84,84) to (84,84,1) 
 
         if Config.USE_AUDIO:
             return [image_, audio_]
@@ -80,12 +80,12 @@ class Environment:
 
     def _update_frame_q(self, frame):
         if self.frame_q.full():
-            self.frame_q.get()# Pop oldest frame
+            self.frame_q.get()  # Pop oldest frame
         self.frame_q.put(frame)
 
     def _update_audio_q(self, audio):
         if self.audio_q.full():
-            self.audio_q.get()# Pop oldest frame
+            self.audio_q.get()  # Pop oldest frame
         self.audio_q.put(audio)
 
     def reset(self):
@@ -136,7 +136,7 @@ class Environment:
             plt.ylabel("Step #")
             ax = plt.gca()
             ax.set_xlim(-0.2, 1.2)
-        plt.savefig(str(count) + "_attention.png")
+        plt.savefig(str(count) + "_attention" + "_key" + str(self.game.key_type) + ".png")
         plt.close(0)
 
         # image, audio = self.game._get_obs(show_gt=True)

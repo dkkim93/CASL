@@ -50,6 +50,7 @@ class OptionTracker():
 
         self.img_traj_tracker = np.zeros((Config.ENV_COL, Config.ENV_ROW, Config.NUM_OPTIONS))
         self.img_option_term_tracker = np.zeros((Config.ENV_COL, Config.ENV_ROW, Config.NUM_OPTIONS))
+        self.history = []
 
     def _update_tracker(self, agt_loc, i_option, option_term):
         self.img_traj_tracker[agt_loc[0], agt_loc[1], i_option] += 1

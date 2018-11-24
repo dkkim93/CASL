@@ -49,7 +49,9 @@ class Doorpuzzle():
         return abs(loc_a[0] - loc_b[0]) + abs(loc_a[1] - loc_b[1])
 
     def dist_euclid(self, loc_a, loc_b):
-        return np.linalg.norm(loc_a - loc_b) 
+        first = (int(loc_a[0]) - int(loc_b[0]))**2
+        second = (int(loc_a[1]) - int(loc_b[1]))**2
+        return np.sqrt(first + second)
 
     #########################################################################
     # ENV-RELATED

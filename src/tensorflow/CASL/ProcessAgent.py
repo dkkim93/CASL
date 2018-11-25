@@ -31,7 +31,6 @@ from datetime import datetime
 from multiprocessing import Process, Queue, Value
 from Environment import Environment
 from Experience import Experience
-from OptionTracker import OptionTracker
 from models import CustomLayers
 
 
@@ -51,11 +50,6 @@ class ProcessAgent(Process):
         self.stats = stats
         self.last_vis_episode_num = 0
         self.is_vis_training = False  # Initialize to False
-        self.is_option_tracker_on = False
-        self.option_tracker = OptionTracker()
-
-        # if Config.PLAY_MODE and Config.LOAD_CHECKPOINT and Config.USE_OPTIONS:
-        #     self.is_option_tracker_on = True
 
     @staticmethod
     def _accumulate_rewards(experiences, discount_factor, terminal_reward, game_done):
@@ -221,12 +215,6 @@ class ProcessAgent(Process):
                     self.env.previous_state, None, i_action, i_option, reward, game_done)
             experiences.append(exp)
             
-            # Plot option trajectories
-            if self.is_option_tracker_on:
-                raise ValueError("what is agt_loc?")
-                self.option_tracker._update_tracker(agt_loc, i_option, self.option_terminated)
-                self.option_tracker._plot_tracker()
-
             # Config.TIME_MAX controls how often data is yielded/sent back to the for loop in the run(). 
             # It is used to ensure, for games w long episodes, that data is sent back to the trainers sufficiently often
             # The shorter Config.TIME_MAX is, the more often the data queue is updated 

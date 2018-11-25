@@ -81,7 +81,7 @@ class Config:
     #########################################################################
     # NET ARCHITECTURE
     NET_ARCH = 'Net_3C_A_K_XL_F'  # Neural net architecture. Any from the 'models' folder can be selected.
-    USE_OPTIONS = True  # If True, learn option policy. If False, learn (primitive) action policies
+    USE_OPTIONS = False  # If True, learn option policy. If False, learn (primitive) action policies
     USE_RNN = True  # Enable to tse LSTM in neural net architecture
     USE_ATTENTION = True  # Enable to use attention for crossmodal
     attn_temporal, attn_multimodal = range(2)  # NOTE This code only works for attn_multimodal
@@ -110,9 +110,9 @@ class Config:
     #########################################################################
     # NUMBER OF AGENTS, PREDICTORS, TRAINERS, AND OTHER SYSTEM SETTINGS
     # IF THE DYNAMIC CONFIG IS ON, THESE ARE THE INITIAL VALUES
-    AGENTS = 32  # Number of Agents
-    PREDICTORS = 4  # Number of Predictors
-    TRAINERS = 4  # Number of Trainers
+    AGENTS = 1  # Number of Agents
+    PREDICTORS = 1  # Number of Predictors
+    TRAINERS = 1  # Number of Trainers
     DEVICE = '/gpu:0'  # Device
     DYNAMIC_SETTINGS = False  # Enable the dynamic adjustment (+ waiting time to start it)
     DYNAMIC_SETTINGS_STEP_WAIT = 20
